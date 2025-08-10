@@ -8,6 +8,9 @@
     "build:prod": "prisma generate --schema=prisma/schema.production.prisma && next build",
     "start": "next start",
     "lint": "next lint",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
     "db:migrate:dev": "prisma migrate dev",
     "db:migrate:prod": "prisma migrate deploy --schema=prisma/schema.production.prisma",
     "db:generate": "prisma generate",
@@ -29,11 +32,18 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
+    "@testing-library/jest-dom": "^6.6.4",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/jest": "^30.0.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "15.4.6",
+    "jest": "^30.0.5",
+    "jest-environment-jsdom": "^30.0.5",
+    "node-mocks-http": "^1.17.2",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
