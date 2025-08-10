@@ -40,25 +40,27 @@ export function Navbar() {
                   Sell Cards
                 </Link>
                 <div className="relative group">
-                  <button className="flex items-center text-gray-600 hover:text-gray-900">
+                  <button className="flex items-center text-gray-600 hover:text-gray-900 p-1">
                     <User className="h-6 w-6" />
                   </button>
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10 hidden group-hover:block">
-                    <Link href="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                      Profile
-                    </Link>
-                    <Link href="/my-cards" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                      My Cards
-                    </Link>
-                    <Link href="/purchases" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                      Purchases
-                    </Link>
-                    <button
-                      onClick={() => signOut()}
-                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                      Sign Out
-                    </button>
+                  <div className="absolute right-0 top-full pt-1 w-48 z-10 hidden group-hover:block">
+                    <div className="bg-white rounded-md shadow-lg py-1 border">
+                      <Link href="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                        Profile
+                      </Link>
+                      <Link href="/my-cards" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                        My Cards
+                      </Link>
+                      <Link href="/purchases" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                        Purchases
+                      </Link>
+                      <button
+                        onClick={() => signOut()}
+                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        Sign Out
+                      </button>
+                    </div>
                   </div>
                 </div>
               </>
