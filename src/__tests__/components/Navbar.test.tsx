@@ -88,7 +88,7 @@ describe('Navbar', () => {
     // Check if dropdown items appear
     await waitFor(() => {
       expect(screen.getByText('Profile')).toBeInTheDocument()
-      expect(screen.getByText('My Cards')).toBeInTheDocument()
+      expect(screen.getByText('My Listings')).toBeInTheDocument()
       expect(screen.getByText('Purchases')).toBeInTheDocument()
       expect(screen.getByText('Sign Out')).toBeInTheDocument()
     })
