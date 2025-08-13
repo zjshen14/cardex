@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { Edit, Trash2, Eye, DollarSign } from 'lucide-react'
+import { ConfirmDialog } from '@/components/ConfirmDialog'
+import { LoadingModal } from '@/components/LoadingModal'
 
 interface Card {
   id: string
@@ -43,18 +45,10 @@ export default function MyCardsPage() {
   const [cards, setCards] = useState<Card[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-
-  // Redirect if not authenticated
-  if (status === 'loading') {
-    return <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600" data-testid="loading-spinner"></div>
-    </div>
-  }
-
-  if (status === 'unauthenticated') {
-    router.push('/auth/signin')
-    return null
-  }
+  const [deleteCard, setDeleteCard] = useState<Card | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [deleteStatus, setDeleteStatus] = useState<'loading' | 'success' | 'error' | null>(null)
+  const [deleteMessage, setDeleteMessage] = useState('')
 
   useEffect(() => {
     const fetchMyCards = async () => {
@@ -78,6 +72,18 @@ export default function MyCardsPage() {
     }
   }, [session])
 
+  // Redirect if not authenticated
+  if (status === 'loading') {
+    return <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600" data-testid="loading-spinner"></div>
+    </div>
+  }
+
+  if (status === 'unauthenticated') {
+    router.push('/auth/signin')
+    return null
+  }
+
   const formatCondition = (condition: string) => {
     return condition.toLowerCase().replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
   }
@@ -94,6 +100,53 @@ export default function MyCardsPage() {
       case 'REFUNDED': return 'bg-purple-100 text-purple-800'
       default: return 'bg-gray-100 text-gray-800'
     }
+  }
+
+  const handleDeleteClick = (card: Card) => {
+    setDeleteCard(card)
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteCard) return
+
+    setIsDeleting(true)
+    setDeleteStatus('loading')
+    setDeleteMessage('')
+    
+    try {
+      const response = await fetch(`/api/cards/${deleteCard.id}`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to delete listing')
+      }
+
+      // Remove the deleted card from the list
+      setCards(prev => prev.filter(card => card.id !== deleteCard.id))
+      setDeleteStatus('success')
+      setDeleteMessage('Your listing has been deleted successfully!')
+      
+      // Close confirmation dialog
+      setDeleteCard(null)
+      
+    } catch (error) {
+      console.error('Error deleting card:', error)
+      setDeleteStatus('error')
+      setDeleteMessage(error instanceof Error ? error.message : 'Failed to delete listing')
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
+  const handleDeleteCancel = () => {
+    setDeleteCard(null)
+  }
+
+  const handleDeleteStatusClose = () => {
+    setDeleteStatus(null)
+    setDeleteMessage('')
   }
 
   if (loading) {
@@ -179,9 +232,10 @@ export default function MyCardsPage() {
                           <Edit className="h-4 w-4" />
                         </button>
                         <button
-                          onClick={() => {/* TODO: Implement delete */}}
+                          onClick={() => handleDeleteClick(card)}
                           className="p-2 text-red-600 hover:bg-red-100 rounded-md"
                           title="Delete listing"
+                          disabled={isDeleting}
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
@@ -243,6 +297,31 @@ export default function MyCardsPage() {
           </div>
         )}
       </div>
+
+      {/* Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={deleteCard !== null}
+        title="Delete Listing"
+        message={`Are you sure you want to delete "${deleteCard?.title}"? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
+        onConfirm={handleDeleteConfirm}
+        onCancel={handleDeleteCancel}
+      />
+
+      {/* Delete Status Modal */}
+      <LoadingModal
+        isOpen={deleteStatus !== null}
+        status={deleteStatus || 'loading'}
+        title="Delete Listing"
+        loadingMessage="Deleting your listing..."
+        successMessage={deleteMessage}
+        errorMessage={deleteMessage}
+        onSuccess={handleDeleteStatusClose}
+        onError={handleDeleteStatusClose}
+        onClose={handleDeleteStatusClose}
+      />
     </div>
   )
 }

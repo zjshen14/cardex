@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, fireEvent } from '@testing-library/react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import MyCardsPage from '@/app/listings/page'
@@ -327,5 +327,364 @@ describe('MyCardsPage (Listings)', () => {
     render(<MyCardsPage />)
     
     expect(screen.getByTestId('loading-spinner')).toBeInTheDocument()
+  })
+
+  describe('Delete Listing Functionality', () => {
+    beforeEach(() => {
+      ;(useSession as jest.Mock).mockReturnValue({
+        data: { user: { email: 'test@example.com' } },
+        status: 'authenticated',
+      })
+    })
+
+    it('should open confirmation dialog when delete button is clicked', async () => {
+      const mockResponse = {
+        ok: true,
+        json: jest.fn().mockResolvedValue(mockCards),
+      }
+      ;(fetch as jest.Mock).mockResolvedValue(mockResponse)
+
+      render(<MyCardsPage />)
+      
+      await waitFor(() => {
+        expect(screen.getByText('Charizard')).toBeInTheDocument()
+      })
+
+      const deleteButton = screen.getAllByTitle('Delete listing')[0]
+      fireEvent.click(deleteButton)
+
+      // Check that confirmation dialog is opened
+      await waitFor(() => {
+        expect(screen.getByText('Delete Listing')).toBeInTheDocument()
+        expect(screen.getByText('Are you sure you want to delete "Charizard"? This action cannot be undone.')).toBeInTheDocument()
+        expect(screen.getByText('Delete')).toBeInTheDocument()
+        expect(screen.getByText('Cancel')).toBeInTheDocument()
+      })
+    })
+
+    it('should close confirmation dialog when cancel is clicked', async () => {
+      const mockResponse = {
+        ok: true,
+        json: jest.fn().mockResolvedValue(mockCards),
+      }
+      ;(fetch as jest.Mock).mockResolvedValue(mockResponse)
+
+      render(<MyCardsPage />)
+      
+      await waitFor(() => {
+        expect(screen.getByText('Charizard')).toBeInTheDocument()
+      })
+
+      const deleteButton = screen.getAllByTitle('Delete listing')[0]
+      fireEvent.click(deleteButton)
+
+      await waitFor(() => {
+        expect(screen.getByText('Delete Listing')).toBeInTheDocument()
+      })
+
+      const cancelButton = screen.getByText('Cancel')
+      fireEvent.click(cancelButton)
+
+      // Dialog should be closed
+      await waitFor(() => {
+        expect(screen.queryByText('Delete Listing')).not.toBeInTheDocument()
+      })
+    })
+
+    it('should successfully delete a listing', async () => {
+      const mockResponse = {
+        ok: true,
+        json: jest.fn().mockResolvedValue(mockCards),
+      }
+      ;(fetch as jest.Mock).mockResolvedValue(mockResponse)
+
+      render(<MyCardsPage />)
+      
+      await waitFor(() => {
+        expect(screen.getByText('Charizard')).toBeInTheDocument()
+        expect(screen.getByText('Blastoise')).toBeInTheDocument()
+      })
+
+      const deleteButton = screen.getAllByTitle('Delete listing')[0]
+      fireEvent.click(deleteButton)
+
+      await waitFor(() => {
+        expect(screen.getByText('Delete Listing')).toBeInTheDocument()
+      })
+
+      // Mock successful delete response
+      const deleteResponse = {
+        ok: true,
+        json: jest.fn().mockResolvedValue({ success: true }),
+      }
+      ;(fetch as jest.Mock).mockResolvedValueOnce(deleteResponse)
+
+      const confirmButton = screen.getByText('Delete')
+      fireEvent.click(confirmButton)
+
+      // Check delete API call was made
+      await waitFor(() => {
+        expect(fetch).toHaveBeenCalledWith('/api/cards/card-1', {
+          method: 'DELETE',
+        })
+      })
+
+      // Check success message appears
+      await waitFor(() => {
+        expect(screen.getByText('Your listing has been deleted successfully!')).toBeInTheDocument()
+      })
+
+      // Check that Charizard is removed from the list but Blastoise remains
+      await waitFor(() => {
+        expect(screen.queryByText('Charizard')).not.toBeInTheDocument()
+        expect(screen.getByText('Blastoise')).toBeInTheDocument()
+      })
+    })
+
+    it('should handle delete error', async () => {
+      const mockResponse = {
+        ok: true,
+        json: jest.fn().mockResolvedValue(mockCards),
+      }
+      ;(fetch as jest.Mock).mockResolvedValue(mockResponse)
+
+      render(<MyCardsPage />)
+      
+      await waitFor(() => {
+        expect(screen.getByText('Charizard')).toBeInTheDocument()
+      })
+
+      const deleteButton = screen.getAllByTitle('Delete listing')[0]
+      fireEvent.click(deleteButton)
+
+      await waitFor(() => {
+        expect(screen.getByText('Delete Listing')).toBeInTheDocument()
+      })
+
+      // Mock error response
+      const errorResponse = {
+        ok: false,
+        json: jest.fn().mockResolvedValue({ error: 'Failed to delete listing' }),
+      }
+      ;(fetch as jest.Mock).mockResolvedValueOnce(errorResponse)
+
+      const confirmButton = screen.getByText('Delete')
+      fireEvent.click(confirmButton)
+
+      // Check error message appears
+      await waitFor(() => {
+        expect(screen.getByText('Failed to delete listing')).toBeInTheDocument()
+      })
+
+      // Check that card is still in the list
+      expect(screen.getByText('Charizard')).toBeInTheDocument()
+    })
+
+    it('should show loading state during delete operation', async () => {
+      const mockResponse = {
+        ok: true,
+        json: jest.fn().mockResolvedValue(mockCards),
+      }
+      ;(fetch as jest.Mock).mockResolvedValue(mockResponse)
+
+      render(<MyCardsPage />)
+      
+      await waitFor(() => {
+        expect(screen.getByText('Charizard')).toBeInTheDocument()
+      })
+
+      const deleteButton = screen.getAllByTitle('Delete listing')[0]
+      fireEvent.click(deleteButton)
+
+      await waitFor(() => {
+        expect(screen.getByText('Delete Listing')).toBeInTheDocument()
+      })
+
+      // Mock slow delete response
+      const deletePromise = new Promise((resolve) => {
+        setTimeout(() => {
+          resolve({
+            ok: true,
+            json: jest.fn().mockResolvedValue({ success: true }),
+          })
+        }, 100)
+      })
+      ;(fetch as jest.Mock).mockReturnValueOnce(deletePromise)
+
+      const confirmButton = screen.getByText('Delete')
+      fireEvent.click(confirmButton)
+
+      // Check loading message appears
+      await waitFor(() => {
+        expect(screen.getByText('Deleting your listing...')).toBeInTheDocument()
+      })
+    })
+
+    it('should disable delete buttons during delete operation', async () => {
+      const mockResponse = {
+        ok: true,
+        json: jest.fn().mockResolvedValue(mockCards),
+      }
+      ;(fetch as jest.Mock).mockResolvedValue(mockResponse)
+
+      render(<MyCardsPage />)
+      
+      await waitFor(() => {
+        expect(screen.getByText('Charizard')).toBeInTheDocument()
+      })
+
+      const deleteButtons = screen.getAllByTitle('Delete listing')
+      fireEvent.click(deleteButtons[0])
+
+      await waitFor(() => {
+        expect(screen.getByText('Delete Listing')).toBeInTheDocument()
+      })
+
+      // Mock slow delete response
+      const deletePromise = new Promise((resolve) => {
+        setTimeout(() => {
+          resolve({
+            ok: true,
+            json: jest.fn().mockResolvedValue({ success: true }),
+          })
+        }, 100)
+      })
+      ;(fetch as jest.Mock).mockReturnValueOnce(deletePromise)
+
+      const confirmButton = screen.getByText('Delete')
+      fireEvent.click(confirmButton)
+
+      // Check that all delete buttons are disabled during operation
+      await waitFor(() => {
+        deleteButtons.forEach(button => {
+          expect(button).toBeDisabled()
+        })
+      })
+    })
+
+    it('should handle network error during delete', async () => {
+      const mockResponse = {
+        ok: true,
+        json: jest.fn().mockResolvedValue(mockCards),
+      }
+      ;(fetch as jest.Mock).mockResolvedValue(mockResponse)
+
+      render(<MyCardsPage />)
+      
+      await waitFor(() => {
+        expect(screen.getByText('Charizard')).toBeInTheDocument()
+      })
+
+      const deleteButton = screen.getAllByTitle('Delete listing')[0]
+      fireEvent.click(deleteButton)
+
+      await waitFor(() => {
+        expect(screen.getByText('Delete Listing')).toBeInTheDocument()
+      })
+
+      // Mock network error
+      ;(fetch as jest.Mock).mockRejectedValueOnce(new Error('Network error'))
+
+      const confirmButton = screen.getByText('Delete')
+      fireEvent.click(confirmButton)
+
+      // Check error message appears
+      await waitFor(() => {
+        expect(screen.getByText('Network error')).toBeInTheDocument()
+      })
+
+      // Check that card is still in the list
+      expect(screen.getByText('Charizard')).toBeInTheDocument()
+    })
+
+    it('should automatically close success modal after delay', async () => {
+      const mockResponse = {
+        ok: true,
+        json: jest.fn().mockResolvedValue(mockCards),
+      }
+      ;(fetch as jest.Mock).mockResolvedValue(mockResponse)
+
+      render(<MyCardsPage />)
+      
+      await waitFor(() => {
+        expect(screen.getByText('Charizard')).toBeInTheDocument()
+      })
+
+      const deleteButton = screen.getAllByTitle('Delete listing')[0]
+      fireEvent.click(deleteButton)
+
+      await waitFor(() => {
+        expect(screen.getByText('Delete Listing')).toBeInTheDocument()
+      })
+
+      // Mock successful delete response
+      const deleteResponse = {
+        ok: true,
+        json: jest.fn().mockResolvedValue({ success: true }),
+      }
+      ;(fetch as jest.Mock).mockResolvedValueOnce(deleteResponse)
+
+      const confirmButton = screen.getByText('Delete')
+      fireEvent.click(confirmButton)
+
+      // Wait for success message
+      await waitFor(() => {
+        expect(screen.getByText('Your listing has been deleted successfully!')).toBeInTheDocument()
+      })
+
+      // Check that success modal is automatically closed after delay
+      await waitFor(() => {
+        expect(screen.queryByText('Your listing has been deleted successfully!')).not.toBeInTheDocument()
+      }, { timeout: 2000 })
+    })
+
+    it('should show close button for error modal', async () => {
+      const mockResponse = {
+        ok: true,
+        json: jest.fn().mockResolvedValue(mockCards),
+      }
+      ;(fetch as jest.Mock).mockResolvedValue(mockResponse)
+
+      render(<MyCardsPage />)
+      
+      await waitFor(() => {
+        expect(screen.getByText('Charizard')).toBeInTheDocument()
+      })
+
+      const deleteButton = screen.getAllByTitle('Delete listing')[0]
+      fireEvent.click(deleteButton)
+
+      await waitFor(() => {
+        expect(screen.getByText('Delete Listing')).toBeInTheDocument()
+      })
+
+      // Mock error response
+      const errorResponse = {
+        ok: false,
+        json: jest.fn().mockResolvedValue({ error: 'Failed to delete listing' }),
+      }
+      ;(fetch as jest.Mock).mockResolvedValueOnce(errorResponse)
+
+      const confirmButton = screen.getByText('Delete')
+      fireEvent.click(confirmButton)
+
+      // Wait for error message
+      await waitFor(() => {
+        expect(screen.getByText('Failed to delete listing')).toBeInTheDocument()
+      })
+
+      // Check that close button exists and works
+      const closeButtons = screen.getAllByRole('button', { name: 'Close' })
+      const modalCloseButton = closeButtons.find(button => 
+        button.textContent === 'Close' && !button.querySelector('svg')
+      )
+      expect(modalCloseButton).toBeInTheDocument()
+      fireEvent.click(modalCloseButton!)
+
+      // Check that error modal is closed
+      await waitFor(() => {
+        expect(screen.queryByText('Failed to delete listing')).not.toBeInTheDocument()
+      })
+    })
   })
 })
