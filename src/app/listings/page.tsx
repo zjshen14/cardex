@@ -7,6 +7,7 @@ import { Edit, Trash2, Eye, DollarSign } from 'lucide-react'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { LoadingModal } from '@/components/LoadingModal'
 import { EditListingDialog } from '@/components/EditListingDialog'
+import { ViewListingModal } from '@/components/ViewListingModal'
 
 interface Card {
   id: string
@@ -54,6 +55,7 @@ export default function MyCardsPage() {
   const [isEditing, setIsEditing] = useState(false)
   const [editStatus, setEditStatus] = useState<'loading' | 'success' | 'error' | null>(null)
   const [editMessage, setEditMessage] = useState('')
+  const [viewCard, setViewCard] = useState<Card | null>(null)
 
   useEffect(() => {
     const fetchMyCards = async () => {
@@ -208,6 +210,14 @@ export default function MyCardsPage() {
     setEditMessage('')
   }
 
+  const handleViewClick = (card: Card) => {
+    setViewCard(card)
+  }
+
+  const handleViewClose = () => {
+    setViewCard(null)
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -277,7 +287,7 @@ export default function MyCardsPage() {
                       </div>
                       <div className="flex space-x-2">
                         <button
-                          onClick={() => {/* TODO: Implement view */}}
+                          onClick={() => handleViewClick(card)}
                           className="p-2 text-gray-600 hover:bg-gray-100 rounded-md"
                           title="View details"
                         >
@@ -403,6 +413,13 @@ export default function MyCardsPage() {
         onSuccess={handleEditStatusClose}
         onError={handleEditStatusClose}
         onClose={handleEditStatusClose}
+      />
+
+      {/* View Listing Modal */}
+      <ViewListingModal
+        isOpen={viewCard !== null}
+        card={viewCard}
+        onClose={handleViewClose}
       />
     </div>
   )
