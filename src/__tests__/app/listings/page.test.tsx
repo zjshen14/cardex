@@ -687,4 +687,396 @@ describe('MyCardsPage (Listings)', () => {
       })
     })
   })
+
+  describe('Edit Listing Functionality', () => {
+    beforeEach(() => {
+      ;(useSession as jest.Mock).mockReturnValue({
+        data: { user: { email: 'test@example.com' } },
+        status: 'authenticated',
+      })
+    })
+
+    it('should open edit dialog when edit button is clicked', async () => {
+      const mockResponse = {
+        ok: true,
+        json: jest.fn().mockResolvedValue(mockCards),
+      }
+      ;(fetch as jest.Mock).mockResolvedValue(mockResponse)
+
+      render(<MyCardsPage />)
+      
+      await waitFor(() => {
+        expect(screen.getByText('Charizard')).toBeInTheDocument()
+      })
+
+      const editButton = screen.getAllByTitle('Edit listing')[0]
+      fireEvent.click(editButton)
+
+      // Check that edit dialog is opened
+      await waitFor(() => {
+        expect(screen.getByText('Edit Listing')).toBeInTheDocument()
+        expect(screen.getByDisplayValue('Charizard')).toBeInTheDocument()
+        expect(screen.getByDisplayValue('Rare Pokemon card')).toBeInTheDocument()
+        expect(screen.getByDisplayValue('100')).toBeInTheDocument()
+        
+        // Check condition specifically by element
+        const conditionSelect = screen.getByLabelText('Condition *')
+        expect(conditionSelect).toHaveValue('MINT')
+      })
+    })
+
+    it('should close edit dialog when cancel is clicked', async () => {
+      const mockResponse = {
+        ok: true,
+        json: jest.fn().mockResolvedValue(mockCards),
+      }
+      ;(fetch as jest.Mock).mockResolvedValue(mockResponse)
+
+      render(<MyCardsPage />)
+      
+      await waitFor(() => {
+        expect(screen.getByText('Charizard')).toBeInTheDocument()
+      })
+
+      const editButton = screen.getAllByTitle('Edit listing')[0]
+      fireEvent.click(editButton)
+
+      await waitFor(() => {
+        expect(screen.getByText('Edit Listing')).toBeInTheDocument()
+      })
+
+      const cancelButton = screen.getByText('Cancel')
+      fireEvent.click(cancelButton)
+
+      // Dialog should be closed
+      await waitFor(() => {
+        expect(screen.queryByText('Edit Listing')).not.toBeInTheDocument()
+      })
+    })
+
+    it('should successfully update a listing', async () => {
+      const mockResponse = {
+        ok: true,
+        json: jest.fn().mockResolvedValue(mockCards),
+      }
+      ;(fetch as jest.Mock).mockResolvedValue(mockResponse)
+
+      render(<MyCardsPage />)
+      
+      await waitFor(() => {
+        expect(screen.getByText('Charizard')).toBeInTheDocument()
+      })
+
+      const editButton = screen.getAllByTitle('Edit listing')[0]
+      fireEvent.click(editButton)
+
+      await waitFor(() => {
+        expect(screen.getByText('Edit Listing')).toBeInTheDocument()
+      })
+
+      // Update the title and price
+      const titleInput = screen.getByLabelText('Card Title *')
+      fireEvent.change(titleInput, { target: { value: 'Updated Charizard' } })
+
+      const priceInput = screen.getByLabelText('Price (USD) *')
+      fireEvent.change(priceInput, { target: { value: '150.50' } })
+
+      // Mock successful update response
+      const updatedCard = {
+        ...mockCards[0],
+        title: 'Updated Charizard',
+        price: 150.50,
+      }
+      const updateResponse = {
+        ok: true,
+        json: jest.fn().mockResolvedValue(updatedCard),
+      }
+      ;(fetch as jest.Mock).mockResolvedValueOnce(updateResponse)
+
+      const saveButton = screen.getByText('Save Changes')
+      fireEvent.click(saveButton)
+
+      // Check update API call was made
+      await waitFor(() => {
+        expect(fetch).toHaveBeenCalledWith('/api/cards/card-1', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            title: 'Updated Charizard',
+            description: 'Rare Pokemon card',
+            condition: 'MINT',
+            price: '150.50',
+            category: 'Trading Cards',
+            set: 'Base Set',
+            rarity: 'Rare',
+            cardNumber: '4/102',
+            year: '1999',
+          }),
+        })
+      })
+
+      // Check success message appears
+      await waitFor(() => {
+        expect(screen.getByText('Your listing has been updated successfully!')).toBeInTheDocument()
+      })
+
+      // Check that card is updated in the list
+      await waitFor(() => {
+        expect(screen.getByText('Updated Charizard')).toBeInTheDocument()
+        expect(screen.getByText('$150.50')).toBeInTheDocument()
+      })
+    })
+
+    it('should handle edit error', async () => {
+      const mockResponse = {
+        ok: true,
+        json: jest.fn().mockResolvedValue(mockCards),
+      }
+      ;(fetch as jest.Mock).mockResolvedValue(mockResponse)
+
+      render(<MyCardsPage />)
+      
+      await waitFor(() => {
+        expect(screen.getByText('Charizard')).toBeInTheDocument()
+      })
+
+      const editButton = screen.getAllByTitle('Edit listing')[0]
+      fireEvent.click(editButton)
+
+      await waitFor(() => {
+        expect(screen.getByText('Edit Listing')).toBeInTheDocument()
+      })
+
+      // Mock error response
+      const errorResponse = {
+        ok: false,
+        json: jest.fn().mockResolvedValue({ error: 'Failed to update listing' }),
+      }
+      ;(fetch as jest.Mock).mockResolvedValueOnce(errorResponse)
+
+      const saveButton = screen.getByText('Save Changes')
+      fireEvent.click(saveButton)
+
+      // Check error message appears
+      await waitFor(() => {
+        expect(screen.getByText('Failed to update listing')).toBeInTheDocument()
+      })
+
+      // Check that card is unchanged in the list
+      expect(screen.getByText('Charizard')).toBeInTheDocument()
+      expect(screen.getByText('$100.00')).toBeInTheDocument()
+    })
+
+    it('should show loading state during edit operation', async () => {
+      const mockResponse = {
+        ok: true,
+        json: jest.fn().mockResolvedValue(mockCards),
+      }
+      ;(fetch as jest.Mock).mockResolvedValue(mockResponse)
+
+      render(<MyCardsPage />)
+      
+      await waitFor(() => {
+        expect(screen.getByText('Charizard')).toBeInTheDocument()
+      })
+
+      const editButton = screen.getAllByTitle('Edit listing')[0]
+      fireEvent.click(editButton)
+
+      await waitFor(() => {
+        expect(screen.getByText('Edit Listing')).toBeInTheDocument()
+      })
+
+      // Mock slow update response
+      const updatePromise = new Promise((resolve) => {
+        setTimeout(() => {
+          resolve({
+            ok: true,
+            json: jest.fn().mockResolvedValue(mockCards[0]),
+          })
+        }, 100)
+      })
+      ;(fetch as jest.Mock).mockReturnValueOnce(updatePromise)
+
+      const saveButton = screen.getByText('Save Changes')
+      fireEvent.click(saveButton)
+
+      // Check loading message appears
+      await waitFor(() => {
+        expect(screen.getByText('Updating your listing...')).toBeInTheDocument()
+      })
+    })
+
+    it('should disable buttons during edit operation', async () => {
+      const mockResponse = {
+        ok: true,
+        json: jest.fn().mockResolvedValue(mockCards),
+      }
+      ;(fetch as jest.Mock).mockResolvedValue(mockResponse)
+
+      render(<MyCardsPage />)
+      
+      await waitFor(() => {
+        expect(screen.getByText('Charizard')).toBeInTheDocument()
+      })
+
+      const editButtons = screen.getAllByTitle('Edit listing')
+      const deleteButtons = screen.getAllByTitle('Delete listing')
+      
+      fireEvent.click(editButtons[0])
+
+      await waitFor(() => {
+        expect(screen.getByText('Edit Listing')).toBeInTheDocument()
+      })
+
+      // Mock slow update response
+      const updatePromise = new Promise((resolve) => {
+        setTimeout(() => {
+          resolve({
+            ok: true,
+            json: jest.fn().mockResolvedValue(mockCards[0]),
+          })
+        }, 100)
+      })
+      ;(fetch as jest.Mock).mockReturnValueOnce(updatePromise)
+
+      const saveButton = screen.getByText('Save Changes')
+      fireEvent.click(saveButton)
+
+      // Check that all action buttons are disabled during operation
+      await waitFor(() => {
+        editButtons.forEach(button => {
+          expect(button).toBeDisabled()
+        })
+        deleteButtons.forEach(button => {
+          expect(button).toBeDisabled()
+        })
+      })
+    })
+
+    it('should handle network error during edit', async () => {
+      const mockResponse = {
+        ok: true,
+        json: jest.fn().mockResolvedValue(mockCards),
+      }
+      ;(fetch as jest.Mock).mockResolvedValue(mockResponse)
+
+      render(<MyCardsPage />)
+      
+      await waitFor(() => {
+        expect(screen.getByText('Charizard')).toBeInTheDocument()
+      })
+
+      const editButton = screen.getAllByTitle('Edit listing')[0]
+      fireEvent.click(editButton)
+
+      await waitFor(() => {
+        expect(screen.getByText('Edit Listing')).toBeInTheDocument()
+      })
+
+      // Mock network error
+      ;(fetch as jest.Mock).mockRejectedValueOnce(new Error('Network error'))
+
+      const saveButton = screen.getByText('Save Changes')
+      fireEvent.click(saveButton)
+
+      // Check error message appears
+      await waitFor(() => {
+        expect(screen.getByText('Network error')).toBeInTheDocument()
+      })
+
+      // Check that card is unchanged in the list
+      expect(screen.getByText('Charizard')).toBeInTheDocument()
+    })
+
+    it('should automatically close success modal after delay', async () => {
+      const mockResponse = {
+        ok: true,
+        json: jest.fn().mockResolvedValue(mockCards),
+      }
+      ;(fetch as jest.Mock).mockResolvedValue(mockResponse)
+
+      render(<MyCardsPage />)
+      
+      await waitFor(() => {
+        expect(screen.getByText('Charizard')).toBeInTheDocument()
+      })
+
+      const editButton = screen.getAllByTitle('Edit listing')[0]
+      fireEvent.click(editButton)
+
+      await waitFor(() => {
+        expect(screen.getByText('Edit Listing')).toBeInTheDocument()
+      })
+
+      // Mock successful update response
+      const updateResponse = {
+        ok: true,
+        json: jest.fn().mockResolvedValue(mockCards[0]),
+      }
+      ;(fetch as jest.Mock).mockResolvedValueOnce(updateResponse)
+
+      const saveButton = screen.getByText('Save Changes')
+      fireEvent.click(saveButton)
+
+      // Wait for success message
+      await waitFor(() => {
+        expect(screen.getByText('Your listing has been updated successfully!')).toBeInTheDocument()
+      })
+
+      // Check that success modal is automatically closed after delay
+      await waitFor(() => {
+        expect(screen.queryByText('Your listing has been updated successfully!')).not.toBeInTheDocument()
+      }, { timeout: 2000 })
+    })
+
+    it('should populate edit form with card data including null fields', async () => {
+      const cardWithNulls = {
+        ...mockCards[0],
+        description: null,
+        set: null,
+        rarity: null,
+        cardNumber: null,
+        year: null,
+      }
+
+      const mockResponse = {
+        ok: true,
+        json: jest.fn().mockResolvedValue([cardWithNulls]),
+      }
+      ;(fetch as jest.Mock).mockResolvedValue(mockResponse)
+
+      render(<MyCardsPage />)
+      
+      await waitFor(() => {
+        expect(screen.getByText('Charizard')).toBeInTheDocument()
+      })
+
+      const editButton = screen.getAllByTitle('Edit listing')[0]
+      fireEvent.click(editButton)
+
+      await waitFor(() => {
+        expect(screen.getByText('Edit Listing')).toBeInTheDocument()
+      })
+
+      // Check that form is populated correctly with null fields as empty
+      expect(screen.getByDisplayValue('Charizard')).toBeInTheDocument()
+      expect(screen.getByDisplayValue('100')).toBeInTheDocument()
+      
+      // Check that null fields are shown as empty
+      const descriptionInput = screen.getByLabelText('Description')
+      const setInput = screen.getByLabelText('Set')
+      const rarityInput = screen.getByLabelText('Rarity')
+      const cardNumberInput = screen.getByLabelText('Card Number')
+      const yearInput = screen.getByLabelText('Year')
+      
+      expect(descriptionInput).toHaveValue('')
+      expect(setInput).toHaveValue('')
+      expect(rarityInput).toHaveValue('')
+      expect(cardNumberInput).toHaveValue('')
+      expect(yearInput).toHaveValue(null)
+    })
+  })
 })

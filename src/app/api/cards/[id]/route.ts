@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma'
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -30,7 +30,7 @@ export async function DELETE(
       )
     }
 
-    const cardId = params.id
+    const { id: cardId } = await params
 
     // Check if the card exists and belongs to the user
     const card = await prisma.card.findFirst({
@@ -70,7 +70,7 @@ export async function DELETE(
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -95,8 +95,39 @@ export async function PUT(
       )
     }
 
-    const cardId = params.id
+    const { id: cardId } = await params
     const body = await req.json()
+
+    // Validate required fields
+    if (!body.title || !body.condition || !body.category) {
+      return NextResponse.json(
+        { error: 'Missing required fields: title, condition, and category are required' },
+        { status: 400 }
+      )
+    }
+
+    // Validate price
+    if (body.price !== undefined && body.price !== '') {
+      const price = parseFloat(body.price)
+      if (isNaN(price) || price < 0) {
+        return NextResponse.json(
+          { error: 'Price must be a valid positive number' },
+          { status: 400 }
+        )
+      }
+    }
+
+    // Validate year
+    if (body.year !== undefined && body.year !== '') {
+      const year = parseInt(body.year)
+      const currentYear = new Date().getFullYear()
+      if (isNaN(year) || year < 1900 || year > currentYear) {
+        return NextResponse.json(
+          { error: `Year must be between 1900 and ${currentYear}` },
+          { status: 400 }
+        )
+      }
+    }
 
     // Check if the card exists and belongs to the user
     const existingCard = await prisma.card.findFirst({
@@ -114,13 +145,19 @@ export async function PUT(
       )
     }
 
-    // Update the card (validation logic similar to POST can be added here)
+    // Update the card
     const updatedCard = await prisma.card.update({
       where: { id: cardId },
       data: {
-        ...body,
+        title: body.title,
+        description: body.description || null,
+        condition: body.condition,
+        category: body.category,
+        set: body.set || null,
+        rarity: body.rarity || null,
+        cardNumber: body.cardNumber || null,
         price: body.price ? parseFloat(body.price) : existingCard.price,
-        year: body.year ? parseInt(body.year) : existingCard.year,
+        year: body.year ? parseInt(body.year) : null,
       },
       include: {
         seller: {

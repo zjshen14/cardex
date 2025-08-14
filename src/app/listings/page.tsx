@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { Edit, Trash2, Eye, DollarSign } from 'lucide-react'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { LoadingModal } from '@/components/LoadingModal'
+import { EditListingDialog } from '@/components/EditListingDialog'
 
 interface Card {
   id: string
@@ -49,6 +50,10 @@ export default function MyCardsPage() {
   const [isDeleting, setIsDeleting] = useState(false)
   const [deleteStatus, setDeleteStatus] = useState<'loading' | 'success' | 'error' | null>(null)
   const [deleteMessage, setDeleteMessage] = useState('')
+  const [editCard, setEditCard] = useState<Card | null>(null)
+  const [isEditing, setIsEditing] = useState(false)
+  const [editStatus, setEditStatus] = useState<'loading' | 'success' | 'error' | null>(null)
+  const [editMessage, setEditMessage] = useState('')
 
   useEffect(() => {
     const fetchMyCards = async () => {
@@ -149,6 +154,60 @@ export default function MyCardsPage() {
     setDeleteMessage('')
   }
 
+  const handleEditClick = (card: Card) => {
+    setEditCard(card)
+  }
+
+  const handleEditSave = async (cardId: string, formData: { title: string; description: string; condition: string; price: string; category: string; set: string; rarity: string; cardNumber: string; year: string }) => {
+    setIsEditing(true)
+    setEditStatus('loading')
+    setEditMessage('')
+    
+    try {
+      const response = await fetch(`/api/cards/${cardId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to update listing')
+      }
+
+      const updatedCard = await response.json()
+
+      // Update the card in the list
+      setCards(prev => prev.map(card => 
+        card.id === cardId ? updatedCard : card
+      ))
+
+      setEditStatus('success')
+      setEditMessage('Your listing has been updated successfully!')
+      
+      // Close edit dialog
+      setEditCard(null)
+      
+    } catch (error) {
+      console.error('Error updating card:', error)
+      setEditStatus('error')
+      setEditMessage(error instanceof Error ? error.message : 'Failed to update listing')
+    } finally {
+      setIsEditing(false)
+    }
+  }
+
+  const handleEditCancel = () => {
+    setEditCard(null)
+  }
+
+  const handleEditStatusClose = () => {
+    setEditStatus(null)
+    setEditMessage('')
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -225,9 +284,10 @@ export default function MyCardsPage() {
                           <Eye className="h-4 w-4" />
                         </button>
                         <button
-                          onClick={() => {/* TODO: Implement edit */}}
+                          onClick={() => handleEditClick(card)}
                           className="p-2 text-blue-600 hover:bg-blue-100 rounded-md"
                           title="Edit listing"
+                          disabled={isDeleting || isEditing}
                         >
                           <Edit className="h-4 w-4" />
                         </button>
@@ -235,7 +295,7 @@ export default function MyCardsPage() {
                           onClick={() => handleDeleteClick(card)}
                           className="p-2 text-red-600 hover:bg-red-100 rounded-md"
                           title="Delete listing"
-                          disabled={isDeleting}
+                          disabled={isDeleting || isEditing}
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
@@ -278,11 +338,11 @@ export default function MyCardsPage() {
                         Listed on {formatDate(card.createdAt)}
                       </div>
                       <div className="text-sm">
-                        {card.transactions.length > 0 ? (
+                        {card.transactions && card.transactions.length > 0 ? (
                           <div className="flex items-center space-x-2">
                             <span className="text-gray-600">Latest transaction:</span>
-                            <span className={`px-2 py-1 rounded-full text-xs ${getStatusColor(card.transactions[0].status)}`}>
-                              {card.transactions[0].status}
+                            <span className={`px-2 py-1 rounded-full text-xs ${getStatusColor(card.transactions[0]?.status || '')}`}>
+                              {card.transactions[0]?.status}
                             </span>
                           </div>
                         ) : (
@@ -321,6 +381,28 @@ export default function MyCardsPage() {
         onSuccess={handleDeleteStatusClose}
         onError={handleDeleteStatusClose}
         onClose={handleDeleteStatusClose}
+      />
+
+      {/* Edit Listing Dialog */}
+      <EditListingDialog
+        isOpen={editCard !== null}
+        card={editCard}
+        onClose={handleEditCancel}
+        onSave={handleEditSave}
+        isLoading={isEditing}
+      />
+
+      {/* Edit Status Modal */}
+      <LoadingModal
+        isOpen={editStatus !== null}
+        status={editStatus || 'loading'}
+        title="Update Listing"
+        loadingMessage="Updating your listing..."
+        successMessage={editMessage}
+        errorMessage={editMessage}
+        onSuccess={handleEditStatusClose}
+        onError={handleEditStatusClose}
+        onClose={handleEditStatusClose}
       />
     </div>
   )
