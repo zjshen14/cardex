@@ -3,6 +3,11 @@ import { DELETE, PUT } from '@/app/api/cards/[id]/route'
 import { getServerSession } from 'next-auth'
 import { prisma } from '@/lib/prisma'
 
+// Mock the image cleanup function
+jest.mock('@/lib/imageCleanup', () => ({
+  cleanupImages: jest.fn().mockResolvedValue(undefined),
+}))
+
 // Helper function to create mock request with proper json() method
 const createMockRequest = (data?: any) => ({
   json: jest.fn().mockResolvedValue(data || {}),

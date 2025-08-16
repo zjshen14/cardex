@@ -813,6 +813,7 @@ describe('MyCardsPage (Listings)', () => {
             rarity: 'Rare',
             cardNumber: '4/102',
             year: '1999',
+            imageUrls: [],
           }),
         })
       })

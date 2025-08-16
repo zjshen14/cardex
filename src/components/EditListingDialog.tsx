@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { X } from 'lucide-react'
+import { X, Upload } from 'lucide-react'
 
 interface Card {
   id: string
@@ -14,6 +14,7 @@ interface Card {
   rarity: string | null
   cardNumber: string | null
   year: number | null
+  imageUrls: string
 }
 
 interface EditListingDialogProps {
@@ -34,6 +35,7 @@ interface FormData {
   rarity: string
   cardNumber: string
   year: string
+  imageUrls: string[]
 }
 
 export function EditListingDialog({ isOpen, card, onClose, onSave, isLoading }: EditListingDialogProps) {
@@ -47,11 +49,23 @@ export function EditListingDialog({ isOpen, card, onClose, onSave, isLoading }: 
     rarity: '',
     cardNumber: '',
     year: '',
+    imageUrls: [],
   })
+  const [newImageFiles, setNewImageFiles] = useState<File[]>([])
+  const [newImagePreviews, setNewImagePreviews] = useState<string[]>([])
+  const [isDragging, setIsDragging] = useState(false)
 
   // Populate form when card changes
   useEffect(() => {
     if (card) {
+      let existingImages: string[] = []
+      try {
+        existingImages = typeof card.imageUrls === 'string' ? JSON.parse(card.imageUrls) : card.imageUrls
+      } catch (error) {
+        console.error('Failed to parse imageUrls:', error)
+        existingImages = []
+      }
+
       setFormData({
         title: card.title,
         description: card.description || '',
@@ -62,7 +76,12 @@ export function EditListingDialog({ isOpen, card, onClose, onSave, isLoading }: 
         rarity: card.rarity || '',
         cardNumber: card.cardNumber || '',
         year: card.year?.toString() || '',
+        imageUrls: existingImages,
       })
+      
+      // Clear new image state when card changes
+      setNewImageFiles([])
+      setNewImagePreviews([])
     }
   }, [card])
 
@@ -71,10 +90,142 @@ export function EditListingDialog({ isOpen, card, onClose, onSave, isLoading }: 
     setFormData(prev => ({ ...prev, [name]: value }))
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const validateFiles = (files: File[]) => {
+    const maxSize = 10 * 1024 * 1024 // 10MB
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']
+    
+    for (const file of files) {
+      if (file.size > maxSize) {
+        throw new Error(`File "${file.name}" is too large. Maximum size is 10MB.`)
+      }
+      if (!allowedTypes.includes(file.type)) {
+        throw new Error(`File "${file.name}" has invalid type. Only JPG, PNG, GIF, and WebP are allowed.`)
+      }
+    }
+  }
+
+  const handleNewImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || [])
+    const totalImages = formData.imageUrls.length + newImageFiles.length + files.length
+    
+    try {
+      if (totalImages > 5) {
+        throw new Error('Maximum 5 images allowed')
+      }
+
+      validateFiles(files)
+      
+      setNewImageFiles(prev => [...prev, ...files])
+      
+      // Generate preview URLs
+      files.forEach(file => {
+        const reader = new FileReader()
+        reader.onload = () => {
+          setNewImagePreviews(prev => [...prev, reader.result as string])
+        }
+        reader.readAsDataURL(file)
+      })
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Invalid file selected')
+      // Clear the input
+      if (e.target) {
+        e.target.value = ''
+      }
+    }
+  }
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    setIsDragging(true)
+  }
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    setIsDragging(false)
+  }
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    setIsDragging(false)
+    
+    const files = Array.from(e.dataTransfer.files).filter(file => 
+      file.type.startsWith('image/')
+    )
+    const totalImages = formData.imageUrls.length + newImageFiles.length + files.length
+    
+    try {
+      if (totalImages > 5) {
+        throw new Error('Maximum 5 images allowed')
+      }
+
+      validateFiles(files)
+
+      setNewImageFiles(prev => [...prev, ...files])
+      
+      // Generate preview URLs
+      files.forEach(file => {
+        const reader = new FileReader()
+        reader.onload = () => {
+          setNewImagePreviews(prev => [...prev, reader.result as string])
+        }
+        reader.readAsDataURL(file)
+      })
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Invalid files dropped')
+    }
+  }
+
+  const removeExistingImage = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      imageUrls: prev.imageUrls.filter((_, i) => i !== index)
+    }))
+  }
+
+  const removeNewImage = (index: number) => {
+    setNewImageFiles(prev => prev.filter((_, i) => i !== index))
+    setNewImagePreviews(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const uploadNewImages = async () => {
+    if (newImageFiles.length === 0) return []
+
+    const formData = new FormData()
+    newImageFiles.forEach(file => {
+      formData.append('files', file)
+    })
+
+    const response = await fetch('/api/upload', {
+      method: 'POST',
+      body: formData,
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.error || 'Failed to upload images')
+    }
+
+    const result = await response.json()
+    return result.urls
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (card) {
-      onSave(card.id, formData)
+      try {
+        // Upload new images if any
+        const newImageUrls = await uploadNewImages()
+        
+        // Combine existing and new image URLs
+        const allImageUrls = [...formData.imageUrls, ...newImageUrls]
+        
+        onSave(card.id, {
+          ...formData,
+          imageUrls: allImageUrls
+        })
+      } catch (error) {
+        alert(error instanceof Error ? error.message : 'Failed to upload images')
+      }
     }
   }
 
@@ -280,6 +431,103 @@ export function EditListingDialog({ isOpen, card, onClose, onSave, isLoading }: 
                   min="0"
                   step="0.01"
                 />
+              </div>
+
+              {/* Image Management */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Card Images (Max 5)
+                </label>
+
+                {/* Existing Images */}
+                {formData.imageUrls.length > 0 && (
+                  <div className="mb-4">
+                    <p className="text-sm text-gray-600 mb-2">Current Images:</p>
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                      {formData.imageUrls.map((url, index) => (
+                        <div key={index} className="relative">
+                          <img
+                            src={url}
+                            alt={`Current ${index + 1}`}
+                            className="w-full h-20 object-cover rounded border"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeExistingImage(index)}
+                            disabled={isLoading}
+                            className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 disabled:opacity-50"
+                            title="Remove image"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* New Image Upload */}
+                {(formData.imageUrls.length + newImageFiles.length) < 5 && (
+                  <div 
+                    className={`border-2 border-dashed rounded-lg p-4 text-center transition-colors ${
+                      isDragging 
+                        ? 'border-blue-500 bg-blue-50' 
+                        : 'border-gray-300 hover:border-gray-400'
+                    }`}
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                  >
+                    <input
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      onChange={handleNewImageUpload}
+                      disabled={isLoading}
+                      className="hidden"
+                      id="edit-image-upload"
+                    />
+                    <label
+                      htmlFor="edit-image-upload"
+                      className="cursor-pointer flex flex-col items-center"
+                    >
+                      <Upload className={`h-8 w-8 mb-2 ${isDragging ? 'text-blue-500' : 'text-gray-400'}`} />
+                      <span className={`text-sm ${isDragging ? 'text-blue-600' : 'text-gray-600'}`}>
+                        {isDragging ? 'Drop images here' : 'Click to upload or drag and drop'}
+                      </span>
+                      <span className="text-xs text-gray-500 mt-1">
+                        PNG, JPG, GIF up to 10MB each
+                      </span>
+                    </label>
+                  </div>
+                )}
+
+                {/* New Image Previews */}
+                {newImagePreviews.length > 0 && (
+                  <div className="mt-3">
+                    <p className="text-sm text-gray-600 mb-2">New Images to Upload:</p>
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                      {newImagePreviews.map((preview, index) => (
+                        <div key={index} className="relative">
+                          <img
+                            src={preview}
+                            alt={`New ${index + 1}`}
+                            className="w-full h-20 object-cover rounded border border-green-300"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeNewImage(index)}
+                            disabled={isLoading}
+                            className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 disabled:opacity-50"
+                            title="Remove image"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Action Buttons */}

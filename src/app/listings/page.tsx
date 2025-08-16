@@ -160,7 +160,7 @@ export default function MyCardsPage() {
     setEditCard(card)
   }
 
-  const handleEditSave = async (cardId: string, formData: { title: string; description: string; condition: string; price: string; category: string; set: string; rarity: string; cardNumber: string; year: string }) => {
+  const handleEditSave = async (cardId: string, formData: { title: string; description: string; condition: string; price: string; category: string; set: string; rarity: string; cardNumber: string; year: string; imageUrls: string[] }) => {
     setIsEditing(true)
     setEditStatus('loading')
     setEditMessage('')

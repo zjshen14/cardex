@@ -1,6 +1,9 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { EditListingDialog } from '@/components/EditListingDialog'
 
+// Mock fetch globally
+global.fetch = jest.fn()
+
 // Mock card data
 const mockCard = {
   id: 'card-1',
@@ -13,14 +16,21 @@ const mockCard = {
   rarity: 'Rare',
   cardNumber: '4/102',
   year: 1999,
+  imageUrls: '["https://example.com/image1.jpg", "https://example.com/image2.jpg"]',
 }
 
 describe('EditListingDialog', () => {
   const mockOnClose = jest.fn()
   const mockOnSave = jest.fn()
+  const mockFetch = fetch as jest.MockedFunction<typeof fetch>
 
   beforeEach(() => {
     jest.clearAllMocks()
+    // Mock fetch to return empty response (no new images uploaded)
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ urls: [] }),
+    } as Response)
   })
 
   it('should not render when closed', () => {
@@ -205,7 +215,7 @@ describe('EditListingDialog', () => {
     expect(priceInput).toHaveValue(150)
   })
 
-  it('should call onSave with correct data when form is submitted', () => {
+  it('should call onSave with correct data when form is submitted', async () => {
     render(
       <EditListingDialog
         isOpen={true}
@@ -230,7 +240,11 @@ describe('EditListingDialog', () => {
     const saveButton = screen.getByText('Save Changes')
     fireEvent.click(saveButton)
 
-    expect(mockOnSave).toHaveBeenCalledTimes(1)
+    // Wait for async operations
+    await waitFor(() => {
+      expect(mockOnSave).toHaveBeenCalledTimes(1)
+    })
+
     expect(mockOnSave).toHaveBeenCalledWith('card-1', {
       title: 'Updated Charizard',
       description: 'Updated description',
@@ -241,6 +255,7 @@ describe('EditListingDialog', () => {
       rarity: 'Rare',
       cardNumber: '4/102',
       year: '1999',
+      imageUrls: ['https://example.com/image1.jpg', 'https://example.com/image2.jpg'],
     })
   })
 
@@ -286,7 +301,7 @@ describe('EditListingDialog', () => {
     expect(mockOnClose).not.toHaveBeenCalled()
   })
 
-  it('should handle all form field updates correctly', () => {
+  it('should handle all form field updates correctly', async () => {
     render(
       <EditListingDialog
         isOpen={true}
@@ -311,16 +326,20 @@ describe('EditListingDialog', () => {
     // Submit form
     fireEvent.click(screen.getByText('Save Changes'))
 
-    expect(mockOnSave).toHaveBeenCalledWith('card-1', {
-      title: 'New Title',
-      description: 'New Description',
-      category: 'Sports Cards',
-      condition: 'NEAR_MINT',
-      set: 'New Set',
-      rarity: 'Ultra Rare',
-      cardNumber: '1/100',
-      year: '2000',
-      price: '200.99',
+    // Wait for async operations
+    await waitFor(() => {
+      expect(mockOnSave).toHaveBeenCalledWith('card-1', {
+        title: 'New Title',
+        description: 'New Description',
+        category: 'Sports Cards',
+        condition: 'NEAR_MINT',
+        set: 'New Set',
+        rarity: 'Ultra Rare',
+        cardNumber: '1/100',
+        year: '2000',
+        price: '200.99',
+        imageUrls: ['https://example.com/image1.jpg', 'https://example.com/image2.jpg'],
+      })
     })
   })
 

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { cleanupImages } from '@/lib/imageCleanup'
 
 export async function DELETE(
   req: NextRequest,
@@ -46,6 +47,11 @@ export async function DELETE(
         { error: 'Card not found or you do not have permission to delete it' },
         { status: 404 }
       )
+    }
+
+    // Clean up associated images before soft delete
+    if (card.imageUrls) {
+      await cleanupImages(card.imageUrls)
     }
 
     // Soft delete - set isActive to false instead of actually deleting
@@ -145,6 +151,26 @@ export async function PUT(
       )
     }
 
+    // Handle imageUrls - convert array to JSON string for SQLite
+    let imageUrlsData = existingCard.imageUrls // Keep existing if not provided
+    if (body.imageUrls !== undefined) {
+      const newImageUrls = Array.isArray(body.imageUrls) ? body.imageUrls : []
+      imageUrlsData = JSON.stringify(newImageUrls)
+      
+      // Clean up removed images
+      if (existingCard.imageUrls) {
+        try {
+          const oldImageUrls = JSON.parse(existingCard.imageUrls)
+          const removedImages = oldImageUrls.filter((url: string) => !newImageUrls.includes(url))
+          if (removedImages.length > 0) {
+            await cleanupImages(removedImages)
+          }
+        } catch (error) {
+          console.warn('Failed to parse existing imageUrls for cleanup:', error)
+        }
+      }
+    }
+
     // Update the card
     const updatedCard = await prisma.card.update({
       where: { id: cardId },
@@ -158,6 +184,7 @@ export async function PUT(
         cardNumber: body.cardNumber || null,
         price: body.price ? parseFloat(body.price) : existingCard.price,
         year: body.year ? parseInt(body.year) : null,
+        imageUrls: imageUrlsData,
       },
       include: {
         seller: {

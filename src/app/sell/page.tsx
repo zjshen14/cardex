@@ -27,6 +27,7 @@ export default function SellPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [modalStatus, setModalStatus] = useState<'loading' | 'success' | 'error' | null>(null)
+  const [isDragging, setIsDragging] = useState(false)
 
   // Redirect if not authenticated
   if (status === 'loading') {
@@ -45,23 +46,113 @@ export default function SellPage() {
     setFormData(prev => ({ ...prev, [name]: value }))
   }
 
+  const validateFiles = (files: File[]) => {
+    const maxSize = 10 * 1024 * 1024 // 10MB
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']
+    
+    for (const file of files) {
+      if (file.size > maxSize) {
+        throw new Error(`File "${file.name}" is too large. Maximum size is 10MB.`)
+      }
+      if (!allowedTypes.includes(file.type)) {
+        throw new Error(`File "${file.name}" has invalid type. Only JPG, PNG, GIF, and WebP are allowed.`)
+      }
+    }
+  }
+
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
-    if (files.length + imageFiles.length > 5) {
-      setError('Maximum 5 images allowed')
-      return
+    
+    try {
+      if (files.length + imageFiles.length > 5) {
+        setError('Maximum 5 images allowed')
+        return
+      }
+
+      validateFiles(files)
+      setError('') // Clear any previous errors
+      
+      setImageFiles(prev => [...prev, ...files])
+      
+      // Generate preview URLs
+      files.forEach(file => {
+        const reader = new FileReader()
+        reader.onload = () => {
+          setImagePreviews(prev => [...prev, reader.result as string])
+        }
+        reader.readAsDataURL(file)
+      })
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Invalid file selected')
+      // Clear the input
+      if (e.target) {
+        e.target.value = ''
+      }
+    }
+  }
+
+  const uploadImages = async () => {
+    if (imageFiles.length === 0) return []
+
+    const formData = new FormData()
+    imageFiles.forEach(file => {
+      formData.append('files', file)
+    })
+
+    const response = await fetch('/api/upload', {
+      method: 'POST',
+      body: formData,
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.error || 'Failed to upload images')
     }
 
-    setImageFiles(prev => [...prev, ...files])
+    const result = await response.json()
+    return result.urls
+  }
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    setIsDragging(true)
+  }
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    setIsDragging(false)
+  }
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    setIsDragging(false)
     
-    // Generate preview URLs
-    files.forEach(file => {
-      const reader = new FileReader()
-      reader.onload = () => {
-        setImagePreviews(prev => [...prev, reader.result as string])
+    const files = Array.from(e.dataTransfer.files).filter(file => 
+      file.type.startsWith('image/')
+    )
+    
+    try {
+      if (files.length + imageFiles.length > 5) {
+        setError('Maximum 5 images allowed')
+        return
       }
-      reader.readAsDataURL(file)
-    })
+
+      validateFiles(files)
+      setError('') // Clear any previous errors
+
+      setImageFiles(prev => [...prev, ...files])
+      
+      // Generate preview URLs
+      files.forEach(file => {
+        const reader = new FileReader()
+        reader.onload = () => {
+          setImagePreviews(prev => [...prev, reader.result as string])
+        }
+        reader.readAsDataURL(file)
+      })
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Invalid files dropped')
+    }
   }
 
   const removeImage = (index: number) => {
@@ -76,8 +167,9 @@ export default function SellPage() {
     setModalStatus('loading')
 
     try {
-      // For now, we'll submit without actual image upload
-      // In production, you'd want to implement proper image upload to cloud storage
+      // Upload images first
+      const imageUrls = await uploadImages()
+      
       const response = await fetch('/api/cards', {
         method: 'POST',
         headers: {
@@ -85,7 +177,7 @@ export default function SellPage() {
         },
         body: JSON.stringify({
           ...formData,
-          imageUrls: [], // TODO: Replace with actual uploaded image URLs
+          imageUrls,
         }),
       })
 
@@ -333,7 +425,16 @@ export default function SellPage() {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Card Images (Max 5)
               </label>
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+              <div 
+                className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+                  isDragging 
+                    ? 'border-blue-500 bg-blue-50' 
+                    : 'border-gray-300 hover:border-gray-400'
+                }`}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+              >
                 <input
                   type="file"
                   multiple
@@ -346,9 +447,9 @@ export default function SellPage() {
                   htmlFor="image-upload"
                   className="cursor-pointer flex flex-col items-center"
                 >
-                  <Upload className="h-12 w-12 text-gray-400 mb-2" />
-                  <span className="text-sm text-gray-600">
-                    Click to upload images or drag and drop
+                  <Upload className={`h-12 w-12 mb-2 ${isDragging ? 'text-blue-500' : 'text-gray-400'}`} />
+                  <span className={`text-sm ${isDragging ? 'text-blue-600' : 'text-gray-600'}`}>
+                    {isDragging ? 'Drop images here' : 'Click to upload images or drag and drop'}
                   </span>
                   <span className="text-xs text-gray-500 mt-1">
                     PNG, JPG, GIF up to 10MB each
