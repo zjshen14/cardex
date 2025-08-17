@@ -6,11 +6,13 @@ interface Card {
   id: string
   title: string
   price: number
-  imageUrls: string[]
+  imageUrls: string
   condition: string
   category: string
   seller: {
-    name: string
+    id: string
+    name: string | null
+    username: string | null
   }
 }
 
@@ -25,13 +27,40 @@ export function CardItem({ card }: CardItemProps) {
     ).join(' ')
   }
 
+  // Parse imageUrls from JSON string
+  const getImageUrls = (): string[] => {
+    try {
+      return JSON.parse(card.imageUrls || '[]')
+    } catch {
+      return []
+    }
+  }
+
+  const imageUrls = getImageUrls()
+  const firstImageUrl = imageUrls.length > 0 ? imageUrls[0] : null
+
+  // Get seller display name
+  const sellerName = card.seller.name || card.seller.username || 'Anonymous'
+
   return (
     <div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
       <Link href={`/cards/${card.id}`}>
         <div className="relative">
-          <div className="w-full h-48 bg-gray-200 rounded-t-lg flex items-center justify-center">
-            <span className="text-gray-500">Card Image</span>
-          </div>
+          {firstImageUrl ? (
+            <div className="w-full h-48 relative rounded-t-lg overflow-hidden">
+              <Image
+                src={firstImageUrl}
+                alt={card.title}
+                fill
+                className="object-cover"
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+              />
+            </div>
+          ) : (
+            <div className="w-full h-48 bg-gray-200 rounded-t-lg flex items-center justify-center">
+              <span className="text-gray-500">No Image</span>
+            </div>
+          )}
           <button className="absolute top-2 right-2 p-2 bg-white rounded-full shadow-md hover:bg-gray-50">
             <Heart className="h-4 w-4 text-gray-600" />
           </button>
@@ -59,12 +88,14 @@ export function CardItem({ card }: CardItemProps) {
         </div>
         
         <div className="text-sm text-gray-500">
-          Sold by {card.seller.name}
+          Sold by {sellerName}
         </div>
         
-        <button className="w-full mt-4 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors">
-          View Details
-        </button>
+        <Link href={`/cards/${card.id}`}>
+          <button className="w-full mt-4 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors">
+            View Details
+          </button>
+        </Link>
       </div>
     </div>
   )

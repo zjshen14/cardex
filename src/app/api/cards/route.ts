@@ -119,12 +119,43 @@ export async function POST(req: NextRequest) {
   }
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url)
+    const featured = searchParams.get('featured')
+    const limit = searchParams.get('limit')
+    const category = searchParams.get('category')
+
+    let whereClause: any = {
+      isActive: true
+    }
+
+    // Add category filter if specified
+    if (category && category !== 'All Categories') {
+      whereClause.category = category
+    }
+
+    let orderByClause: any = {
+      createdAt: 'desc'
+    }
+
+    // Featured cards: most expensive in last 7 days
+    if (featured === 'true') {
+      const sevenDaysAgo = new Date()
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+      
+      whereClause.createdAt = {
+        gte: sevenDaysAgo
+      }
+      
+      orderByClause = [
+        { price: 'desc' },
+        { createdAt: 'desc' }
+      ]
+    }
+
     const cards = await prisma.card.findMany({
-      where: {
-        isActive: true
-      },
+      where: whereClause,
       include: {
         seller: {
           select: {
@@ -134,9 +165,8 @@ export async function GET() {
           }
         }
       },
-      orderBy: {
-        createdAt: 'desc'
-      }
+      orderBy: orderByClause,
+      take: limit ? parseInt(limit) : undefined
     })
 
     return NextResponse.json(cards)

@@ -289,7 +289,7 @@ describe('/api/cards', () => {
 
       mockedPrisma.card.findMany.mockResolvedValue(mockCards)
 
-      const response = await GET()
+      const response = await GET(mockNextRequest('http://localhost:3000/api/cards'))
       const data = await response.json()
 
       expect(response.status).toBe(200)
@@ -318,11 +318,90 @@ describe('/api/cards', () => {
     it('should handle database errors gracefully', async () => {
       mockedPrisma.card.findMany.mockRejectedValue(new Error('Database error'))
 
-      const response = await GET()
+      const response = await GET(mockNextRequest('http://localhost:3000/api/cards'))
       const data = await response.json()
 
       expect(response.status).toBe(500)
       expect(data.error).toBe('Internal server error')
+    })
+
+    it('should return featured cards with correct parameters', async () => {
+      const mockCards = [
+        {
+          id: 'card-1',
+          title: 'Expensive Card',
+          condition: 'MINT',
+          price: 500.00,
+          isActive: true,
+          createdAt: new Date('2025-08-15T10:00:00.000Z'),
+          seller: { id: 'user-1', name: 'Test User', username: null }
+        },
+        {
+          id: 'card-2', 
+          title: 'Cheaper Card',
+          condition: 'NEAR_MINT',
+          price: 100.00,
+          isActive: true,
+          createdAt: new Date('2025-08-15T11:00:00.000Z'),
+          seller: { id: 'user-2', name: 'Another User', username: null }
+        }
+      ]
+      mockedPrisma.card.findMany.mockResolvedValue(mockCards)
+
+      const response = await GET(mockNextRequest('http://localhost:3000/api/cards?featured=true&limit=2'))
+      const data = await response.json()
+
+      expect(response.status).toBe(200)
+      expect(data).toHaveLength(2)
+      expect(mockedPrisma.card.findMany).toHaveBeenCalledWith({
+        where: {
+          isActive: true,
+          createdAt: { gte: expect.any(Date) }
+        },
+        include: {
+          seller: {
+            select: { id: true, name: true, username: true }
+          }
+        },
+        orderBy: [
+          { price: 'desc' },
+          { createdAt: 'desc' }
+        ],
+        take: 2
+      })
+    })
+
+    it('should filter by category when specified', async () => {
+      const mockCards = [
+        {
+          id: 'card-1',
+          title: 'Pokemon Card',
+          condition: 'MINT',
+          price: 100.00,
+          category: 'Trading Cards',
+          isActive: true,
+          seller: { id: 'user-1', name: 'Test User', username: null }
+        }
+      ]
+      mockedPrisma.card.findMany.mockResolvedValue(mockCards)
+
+      const response = await GET(mockNextRequest('http://localhost:3000/api/cards?category=Trading%20Cards'))
+      const data = await response.json()
+
+      expect(response.status).toBe(200)
+      expect(mockedPrisma.card.findMany).toHaveBeenCalledWith({
+        where: {
+          isActive: true,
+          category: 'Trading Cards'
+        },
+        include: {
+          seller: {
+            select: { id: true, name: true, username: true }
+          }
+        },
+        orderBy: { createdAt: 'desc' },
+        take: undefined
+      })
     })
   })
 })

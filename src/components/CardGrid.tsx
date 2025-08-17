@@ -7,65 +7,60 @@ interface Card {
   id: string
   title: string
   price: number
-  imageUrls: string[]
+  imageUrls: string
   condition: string
   category: string
   seller: {
-    name: string
+    id: string
+    name: string | null
+    username: string | null
   }
 }
 
-export function CardGrid() {
+interface CardGridProps {
+  featured?: boolean
+  limit?: number
+  category?: string
+}
+
+export function CardGrid({ featured = false, limit, category }: CardGridProps) {
   const [cards, setCards] = useState<Card[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    // Mock data for demo purposes
-    const mockCards: Card[] = [
-      {
-        id: '1',
-        title: 'Pikachu Shadowless Base Set',
-        price: 299.99,
-        imageUrls: ['/placeholder-card.jpg'],
-        condition: 'NEAR_MINT',
-        category: 'Pokemon',
-        seller: { name: 'CardCollector123' }
-      },
-      {
-        id: '2',
-        title: 'Black Lotus Alpha',
-        price: 15000.00,
-        imageUrls: ['/placeholder-card.jpg'],
-        condition: 'MINT',
-        category: 'Magic: The Gathering',
-        seller: { name: 'VintageCards' }
-      },
-      {
-        id: '3',
-        title: 'Charizard Base Set Unlimited',
-        price: 89.99,
-        imageUrls: ['/placeholder-card.jpg'],
-        condition: 'EXCELLENT',
-        category: 'Pokemon',
-        seller: { name: 'PokemonMaster' }
-      },
-      {
-        id: '4',
-        title: 'Michael Jordan Rookie Card',
-        price: 1200.00,
-        imageUrls: ['/placeholder-card.jpg'],
-        condition: 'NEAR_MINT',
-        category: 'Sports',
-        seller: { name: 'SportsCardPro' }
+    const fetchCards = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+        
+        // Build query parameters
+        const params = new URLSearchParams()
+        if (featured) params.append('featured', 'true')
+        if (limit) params.append('limit', limit.toString())
+        if (category) params.append('category', category)
+        
+        const queryString = params.toString()
+        const url = `/api/cards${queryString ? `?${queryString}` : ''}`
+        
+        const response = await fetch(url)
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch cards')
+        }
+        
+        const data = await response.json()
+        setCards(data)
+      } catch (error) {
+        console.error('Error fetching cards:', error)
+        setError('Failed to load cards. Please try again later.')
+      } finally {
+        setLoading(false)
       }
-    ]
+    }
 
-    // Simulate API call
-    setTimeout(() => {
-      setCards(mockCards)
-      setLoading(false)
-    }, 1000)
-  }, [])
+    fetchCards()
+  }, [featured, limit, category])
 
   if (loading) {
     return (
@@ -77,6 +72,27 @@ export function CardGrid() {
             <div className="h-4 bg-gray-300 rounded w-2/3"></div>
           </div>
         ))}
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-8">
+        <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md">
+          {error}
+        </div>
+      </div>
+    )
+  }
+
+  if (cards.length === 0) {
+    return (
+      <div className="text-center py-8">
+        <div className="text-gray-500">
+          <p className="text-lg font-semibold mb-2">No cards available</p>
+          <p>Be the first to list a card!</p>
+        </div>
       </div>
     )
   }

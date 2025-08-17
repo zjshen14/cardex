@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server'
-import { DELETE, PUT } from '@/app/api/cards/[id]/route'
+import { GET, DELETE, PUT } from '@/app/api/cards/[id]/route'
 import { getServerSession } from 'next-auth'
 import { prisma } from '@/lib/prisma'
 
@@ -60,6 +60,88 @@ const mockedPrisma = prisma as any
 describe('/api/cards/[id]', () => {
   beforeEach(() => {
     jest.clearAllMocks()
+  })
+
+  describe('GET /api/cards/[id]', () => {
+    it('should return card details when card exists', async () => {
+      const mockCard = {
+        id: 'card-123',
+        title: 'Test Card',
+        description: 'A test card',
+        condition: 'NEAR_MINT',
+        price: 10.99,
+        imageUrls: '["image1.jpg", "image2.jpg"]',
+        category: 'Trading Cards',
+        set: 'Base Set',
+        rarity: 'Rare',
+        cardNumber: '1/100',
+        year: 2023,
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        sellerId: 'seller-123',
+        seller: {
+          id: 'seller-123',
+          name: 'Test Seller',
+          username: 'testseller'
+        }
+      }
+
+      ;(prisma.card.findFirst as jest.Mock).mockResolvedValue(mockCard)
+
+      const response = await GET(
+        {} as NextRequest,
+        { params: Promise.resolve({ id: 'card-123' }) }
+      )
+
+      const data = await response.json()
+
+      expect(response.status).toBe(200)
+      expect(data).toEqual(mockCard)
+      expect(prisma.card.findFirst).toHaveBeenCalledWith({
+        where: {
+          id: 'card-123',
+          isActive: true
+        },
+        include: {
+          seller: {
+            select: {
+              id: true,
+              name: true,
+              username: true,
+            }
+          }
+        }
+      })
+    })
+
+    it('should return 404 when card not found', async () => {
+      ;(prisma.card.findFirst as jest.Mock).mockResolvedValue(null)
+
+      const response = await GET(
+        {} as NextRequest,
+        { params: Promise.resolve({ id: 'nonexistent-card' }) }
+      )
+
+      const data = await response.json()
+
+      expect(response.status).toBe(404)
+      expect(data.error).toBe('Card not found')
+    })
+
+    it('should handle database errors', async () => {
+      ;(prisma.card.findFirst as jest.Mock).mockRejectedValue(new Error('Database error'))
+
+      const response = await GET(
+        {} as NextRequest,
+        { params: Promise.resolve({ id: 'card-123' }) }
+      )
+
+      const data = await response.json()
+
+      expect(response.status).toBe(500)
+      expect(data.error).toBe('Internal server error')
+    })
   })
 
   describe('DELETE /api/cards/[id]', () => {
