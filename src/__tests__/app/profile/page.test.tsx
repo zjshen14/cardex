@@ -32,6 +32,16 @@ const mockProfileData = {
   name: 'Test User',
   username: 'testuser',
   createdAt: '2023-01-01T00:00:00.000Z',
+  contactEmail: '',
+  contactPhone: '',
+  contactDiscord: '',
+  contactTelegram: '',
+  preferredContactMethod: '',
+  contactNote: '',
+  showEmail: false,
+  showPhone: false,
+  showDiscord: false,
+  showTelegram: false,
   _count: {
     cards: 5,
     purchases: 3,
@@ -138,7 +148,7 @@ describe('Profile Page', () => {
       expect(screen.getByText('Anonymous User')).toBeInTheDocument()
     })
 
-    expect(screen.getAllByText('Not set')).toHaveLength(2) // name and username
+    expect(screen.getAllByText('Not set')).toHaveLength(6) // name, username, and 4 contact fields
   })
 
   it('should enter edit mode when Edit Profile button is clicked', async () => {
@@ -288,7 +298,17 @@ describe('Profile Page', () => {
         },
         body: JSON.stringify({
           name: 'Updated Name',
-          username: 'updateduser'
+          username: 'updateduser',
+          contactEmail: '',
+          contactPhone: '',
+          contactDiscord: '',
+          contactTelegram: '',
+          preferredContactMethod: '',
+          contactNote: '',
+          showEmail: false,
+          showPhone: false,
+          showDiscord: false,
+          showTelegram: false
         })
       })
     })

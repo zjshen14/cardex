@@ -76,6 +76,16 @@ describe('/api/user/profile', () => {
           name: true,
           username: true,
           createdAt: true,
+          contactEmail: true,
+          contactPhone: true,
+          contactDiscord: true,
+          contactTelegram: true,
+          preferredContactMethod: true,
+          contactNote: true,
+          showEmail: true,
+          showPhone: true,
+          showDiscord: true,
+          showTelegram: true,
           _count: {
             select: {
               cards: true,
@@ -153,9 +163,43 @@ describe('/api/user/profile', () => {
         where: { id: 'user-123' },
         data: {
           name: 'Updated Name',
-          username: 'updateduser'
+          username: 'updateduser',
+          contactEmail: null,
+          contactPhone: null,
+          contactDiscord: null,
+          contactTelegram: null,
+          preferredContactMethod: null,
+          contactNote: null,
+          showEmail: undefined,
+          showPhone: undefined,
+          showDiscord: undefined,
+          showTelegram: undefined
         },
-        select: expect.any(Object)
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          username: true,
+          createdAt: true,
+          contactEmail: true,
+          contactPhone: true,
+          contactDiscord: true,
+          contactTelegram: true,
+          preferredContactMethod: true,
+          contactNote: true,
+          showEmail: true,
+          showPhone: true,
+          showDiscord: true,
+          showTelegram: true,
+          _count: {
+            select: {
+              cards: true,
+              purchases: true,
+              sales: true,
+              watchlist: true
+            }
+          }
+        }
       })
     })
 
