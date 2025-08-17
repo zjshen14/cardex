@@ -22,6 +22,16 @@ export async function GET(
             id: true,
             name: true,
             username: true,
+            contactEmail: true,
+            contactPhone: true,
+            contactDiscord: true,
+            contactTelegram: true,
+            preferredContactMethod: true,
+            contactNote: true,
+            showEmail: true,
+            showPhone: true,
+            showDiscord: true,
+            showTelegram: true,
           }
         }
       }
@@ -233,6 +243,16 @@ export async function PUT(
             id: true,
             name: true,
             username: true,
+            contactEmail: true,
+            contactPhone: true,
+            contactDiscord: true,
+            contactTelegram: true,
+            preferredContactMethod: true,
+            contactNote: true,
+            showEmail: true,
+            showPhone: true,
+            showDiscord: true,
+            showTelegram: true,
           }
         }
       }

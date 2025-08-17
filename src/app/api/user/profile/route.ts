@@ -24,6 +24,16 @@ export async function GET() {
         name: true,
         username: true,
         createdAt: true,
+        contactEmail: true,
+        contactPhone: true,
+        contactDiscord: true,
+        contactTelegram: true,
+        preferredContactMethod: true,
+        contactNote: true,
+        showEmail: true,
+        showPhone: true,
+        showDiscord: true,
+        showTelegram: true,
         _count: {
           select: {
             cards: true,
@@ -65,7 +75,20 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { name, username } = body
+    const { 
+      name, 
+      username, 
+      contactEmail,
+      contactPhone,
+      contactDiscord,
+      contactTelegram,
+      preferredContactMethod,
+      contactNote,
+      showEmail,
+      showPhone,
+      showDiscord,
+      showTelegram
+    } = body
 
     // Validate input
     if (username && typeof username !== 'string') {
@@ -108,7 +131,17 @@ export async function PUT(request: NextRequest) {
       },
       data: {
         name: name || null,
-        username: username || null
+        username: username || null,
+        contactEmail: contactEmail || null,
+        contactPhone: contactPhone || null,
+        contactDiscord: contactDiscord || null,
+        contactTelegram: contactTelegram || null,
+        preferredContactMethod: preferredContactMethod || null,
+        contactNote: contactNote || null,
+        showEmail: showEmail !== undefined ? showEmail : undefined,
+        showPhone: showPhone !== undefined ? showPhone : undefined,
+        showDiscord: showDiscord !== undefined ? showDiscord : undefined,
+        showTelegram: showTelegram !== undefined ? showTelegram : undefined,
       },
       select: {
         id: true,
@@ -116,6 +149,16 @@ export async function PUT(request: NextRequest) {
         name: true,
         username: true,
         createdAt: true,
+        contactEmail: true,
+        contactPhone: true,
+        contactDiscord: true,
+        contactTelegram: true,
+        preferredContactMethod: true,
+        contactNote: true,
+        showEmail: true,
+        showPhone: true,
+        showDiscord: true,
+        showTelegram: true,
         _count: {
           select: {
             cards: true,

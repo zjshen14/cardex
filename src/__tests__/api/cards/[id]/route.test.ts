@@ -109,6 +109,16 @@ describe('/api/cards/[id]', () => {
               id: true,
               name: true,
               username: true,
+              contactEmail: true,
+              contactPhone: true,
+              contactDiscord: true,
+              contactTelegram: true,
+              preferredContactMethod: true,
+              contactNote: true,
+              showEmail: true,
+              showPhone: true,
+              showDiscord: true,
+              showTelegram: true,
             }
           }
         }

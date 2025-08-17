@@ -6,6 +6,7 @@ import { useSession } from 'next-auth/react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowLeft, Heart, Share2, MessageCircle, User, Calendar, Shield } from 'lucide-react'
+import { ContactSellerModal } from '@/components/ContactSellerModal'
 
 interface Card {
   id: string
@@ -24,6 +25,16 @@ interface Card {
     id: string
     name: string | null
     username: string | null
+    contactEmail: string | null
+    contactPhone: string | null
+    contactDiscord: string | null
+    contactTelegram: string | null
+    preferredContactMethod: string | null
+    contactNote: string | null
+    showEmail: boolean
+    showPhone: boolean
+    showDiscord: boolean
+    showTelegram: boolean
   }
 }
 
@@ -35,6 +46,7 @@ export default function CardDetailsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
+  const [showContactModal, setShowContactModal] = useState(false)
 
   useEffect(() => {
     const fetchCard = async () => {
@@ -135,7 +147,19 @@ export default function CardDetailsPage() {
   const isOwner = session?.user?.id === card.seller.id
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <>
+      {/* Contact Seller Modal */}
+      {card && (
+        <ContactSellerModal
+          isOpen={showContactModal}
+          onClose={() => setShowContactModal(false)}
+          seller={card.seller}
+          cardTitle={card.title}
+          cardPrice={card.price}
+        />
+      )}
+
+      <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Back Navigation */}
         <Link 
@@ -272,7 +296,10 @@ export default function CardDetailsPage() {
             <div className="space-y-3">
               {!isOwner ? (
                 <>
-                  <button className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 transition-colors">
+                  <button 
+                    onClick={() => setShowContactModal(true)}
+                    className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                  >
                     Contact Seller
                   </button>
                   <div className="flex space-x-3">
@@ -298,19 +325,10 @@ export default function CardDetailsPage() {
               )}
             </div>
 
-            {/* Trust & Safety */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <div className="flex items-center space-x-2 mb-2">
-                <Shield className="h-5 w-5 text-blue-600" />
-                <span className="font-medium text-blue-900">Buyer Protection</span>
-              </div>
-              <p className="text-sm text-blue-800">
-                All transactions are protected. Get your money back if the item isn't as described.
-              </p>
-            </div>
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   )
 }

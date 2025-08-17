@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { User, Mail, Calendar, Edit2, Save, X } from 'lucide-react'
+import { User, Mail, Calendar, Edit2, Save, X, Phone, MessageCircle, Send, Eye, EyeOff } from 'lucide-react'
 import { LoadingModal } from '@/components/LoadingModal'
 
 interface UserProfile {
@@ -12,6 +12,16 @@ interface UserProfile {
   name: string | null
   username: string | null
   createdAt: string
+  contactEmail: string | null
+  contactPhone: string | null
+  contactDiscord: string | null
+  contactTelegram: string | null
+  preferredContactMethod: string | null
+  contactNote: string | null
+  showEmail: boolean
+  showPhone: boolean
+  showDiscord: boolean
+  showTelegram: boolean
   _count: {
     cards: number
     purchases: number
@@ -32,7 +42,17 @@ export default function ProfilePage() {
   
   const [editForm, setEditForm] = useState({
     name: '',
-    username: ''
+    username: '',
+    contactEmail: '',
+    contactPhone: '',
+    contactDiscord: '',
+    contactTelegram: '',
+    preferredContactMethod: '',
+    contactNote: '',
+    showEmail: false,
+    showPhone: false,
+    showDiscord: false,
+    showTelegram: false
   })
 
   // Fetch user profile data
@@ -47,7 +67,17 @@ export default function ProfilePage() {
         setProfile(data)
         setEditForm({
           name: data.name || '',
-          username: data.username || ''
+          username: data.username || '',
+          contactEmail: data.contactEmail || '',
+          contactPhone: data.contactPhone || '',
+          contactDiscord: data.contactDiscord || '',
+          contactTelegram: data.contactTelegram || '',
+          preferredContactMethod: data.preferredContactMethod || '',
+          contactNote: data.contactNote || '',
+          showEmail: data.showEmail || false,
+          showPhone: data.showPhone || false,
+          showDiscord: data.showDiscord || false,
+          showTelegram: data.showTelegram || false
         })
       } catch (error) {
         console.error('Error fetching profile:', error)
@@ -73,7 +103,17 @@ export default function ProfilePage() {
     setIsEditing(false)
     setEditForm({
       name: profile?.name || '',
-      username: profile?.username || ''
+      username: profile?.username || '',
+      contactEmail: profile?.contactEmail || '',
+      contactPhone: profile?.contactPhone || '',
+      contactDiscord: profile?.contactDiscord || '',
+      contactTelegram: profile?.contactTelegram || '',
+      preferredContactMethod: profile?.preferredContactMethod || '',
+      contactNote: profile?.contactNote || '',
+      showEmail: profile?.showEmail || false,
+      showPhone: profile?.showPhone || false,
+      showDiscord: profile?.showDiscord || false,
+      showTelegram: profile?.showTelegram || false
     })
     setError('')
   }
@@ -120,9 +160,14 @@ export default function ProfilePage() {
     }
   }
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setEditForm(prev => ({ ...prev, [name]: value }))
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value, type } = e.target
+    const checked = (e.target as HTMLInputElement).checked
+    
+    setEditForm(prev => ({ 
+      ...prev, 
+      [name]: type === 'checkbox' ? checked : value 
+    }))
   }
 
   const handleModalClose = () => {
@@ -316,6 +361,226 @@ export default function ProfilePage() {
                       </button>
                     </div>
                   )}
+                </div>
+
+                {/* Contact Information */}
+                <div className="space-y-6">
+                  <h2 className="text-lg font-semibold text-gray-900 border-b pb-2">
+                    Contact Information
+                  </h2>
+                  
+                  <div className="space-y-4">
+                    {/* Contact Email */}
+                    <div className="flex items-start">
+                      <Mail className="h-5 w-5 text-gray-400 mr-3 mt-1" />
+                      <div className="flex-1">
+                        <label className="block text-sm font-medium text-gray-700">Contact Email</label>
+                        {isEditing ? (
+                          <div className="mt-1 space-y-2">
+                            <input
+                              type="email"
+                              name="contactEmail"
+                              value={editForm.contactEmail}
+                              onChange={handleInputChange}
+                              className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              placeholder="your.email@example.com"
+                            />
+                            <label className="flex items-center">
+                              <input
+                                type="checkbox"
+                                name="showEmail"
+                                checked={editForm.showEmail}
+                                onChange={handleInputChange}
+                                className="mr-2"
+                              />
+                              <span className="text-sm text-gray-600 flex items-center">
+                                {editForm.showEmail ? <Eye className="h-4 w-4 mr-1" /> : <EyeOff className="h-4 w-4 mr-1" />}
+                                Show to interested buyers
+                              </span>
+                            </label>
+                          </div>
+                        ) : (
+                          <div className="flex items-center space-x-2">
+                            <p className="text-gray-900">{profile.contactEmail || 'Not set'}</p>
+                            {profile.showEmail && profile.contactEmail && (
+                              <Eye className="h-4 w-4 text-green-500" title="Visible to buyers" />
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Contact Phone */}
+                    <div className="flex items-start">
+                      <Phone className="h-5 w-5 text-gray-400 mr-3 mt-1" />
+                      <div className="flex-1">
+                        <label className="block text-sm font-medium text-gray-700">Phone Number</label>
+                        {isEditing ? (
+                          <div className="mt-1 space-y-2">
+                            <input
+                              type="tel"
+                              name="contactPhone"
+                              value={editForm.contactPhone}
+                              onChange={handleInputChange}
+                              className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              placeholder="+1 (555) 123-4567"
+                            />
+                            <label className="flex items-center">
+                              <input
+                                type="checkbox"
+                                name="showPhone"
+                                checked={editForm.showPhone}
+                                onChange={handleInputChange}
+                                className="mr-2"
+                              />
+                              <span className="text-sm text-gray-600 flex items-center">
+                                {editForm.showPhone ? <Eye className="h-4 w-4 mr-1" /> : <EyeOff className="h-4 w-4 mr-1" />}
+                                Show to interested buyers
+                              </span>
+                            </label>
+                          </div>
+                        ) : (
+                          <div className="flex items-center space-x-2">
+                            <p className="text-gray-900">{profile.contactPhone || 'Not set'}</p>
+                            {profile.showPhone && profile.contactPhone && (
+                              <Eye className="h-4 w-4 text-green-500" title="Visible to buyers" />
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Discord */}
+                    <div className="flex items-start">
+                      <MessageCircle className="h-5 w-5 text-gray-400 mr-3 mt-1" />
+                      <div className="flex-1">
+                        <label className="block text-sm font-medium text-gray-700">Discord Username</label>
+                        {isEditing ? (
+                          <div className="mt-1 space-y-2">
+                            <input
+                              type="text"
+                              name="contactDiscord"
+                              value={editForm.contactDiscord}
+                              onChange={handleInputChange}
+                              className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              placeholder="username#1234"
+                            />
+                            <label className="flex items-center">
+                              <input
+                                type="checkbox"
+                                name="showDiscord"
+                                checked={editForm.showDiscord}
+                                onChange={handleInputChange}
+                                className="mr-2"
+                              />
+                              <span className="text-sm text-gray-600 flex items-center">
+                                {editForm.showDiscord ? <Eye className="h-4 w-4 mr-1" /> : <EyeOff className="h-4 w-4 mr-1" />}
+                                Show to interested buyers
+                              </span>
+                            </label>
+                          </div>
+                        ) : (
+                          <div className="flex items-center space-x-2">
+                            <p className="text-gray-900">{profile.contactDiscord || 'Not set'}</p>
+                            {profile.showDiscord && profile.contactDiscord && (
+                              <Eye className="h-4 w-4 text-green-500" title="Visible to buyers" />
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Telegram */}
+                    <div className="flex items-start">
+                      <Send className="h-5 w-5 text-gray-400 mr-3 mt-1" />
+                      <div className="flex-1">
+                        <label className="block text-sm font-medium text-gray-700">Telegram Handle</label>
+                        {isEditing ? (
+                          <div className="mt-1 space-y-2">
+                            <input
+                              type="text"
+                              name="contactTelegram"
+                              value={editForm.contactTelegram}
+                              onChange={handleInputChange}
+                              className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              placeholder="@username"
+                            />
+                            <label className="flex items-center">
+                              <input
+                                type="checkbox"
+                                name="showTelegram"
+                                checked={editForm.showTelegram}
+                                onChange={handleInputChange}
+                                className="mr-2"
+                              />
+                              <span className="text-sm text-gray-600 flex items-center">
+                                {editForm.showTelegram ? <Eye className="h-4 w-4 mr-1" /> : <EyeOff className="h-4 w-4 mr-1" />}
+                                Show to interested buyers
+                              </span>
+                            </label>
+                          </div>
+                        ) : (
+                          <div className="flex items-center space-x-2">
+                            <p className="text-gray-900">{profile.contactTelegram || 'Not set'}</p>
+                            {profile.showTelegram && profile.contactTelegram && (
+                              <Eye className="h-4 w-4 text-green-500" title="Visible to buyers" />
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Preferred Contact Method */}
+                    {isEditing && (
+                      <div className="flex items-start">
+                        <User className="h-5 w-5 text-gray-400 mr-3 mt-1" />
+                        <div className="flex-1">
+                          <label className="block text-sm font-medium text-gray-700">Preferred Contact Method</label>
+                          <select
+                            name="preferredContactMethod"
+                            value={editForm.preferredContactMethod}
+                            onChange={handleInputChange}
+                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          >
+                            <option value="">Select preferred method</option>
+                            <option value="email">Email</option>
+                            <option value="phone">Phone</option>
+                            <option value="discord">Discord</option>
+                            <option value="telegram">Telegram</option>
+                          </select>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Contact Note */}
+                    <div className="flex items-start">
+                      <MessageCircle className="h-5 w-5 text-gray-400 mr-3 mt-1" />
+                      <div className="flex-1">
+                        <label className="block text-sm font-medium text-gray-700">Contact Note</label>
+                        {isEditing ? (
+                          <textarea
+                            name="contactNote"
+                            value={editForm.contactNote}
+                            onChange={handleInputChange}
+                            rows={2}
+                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="e.g., Available weekdays 9-5 EST, prefer Discord for quick responses"
+                          />
+                        ) : (
+                          <p className="text-gray-900">{profile.contactNote || 'No specific preferences'}</p>
+                        )}
+                      </div>
+                    </div>
+
+                    {!isEditing && (
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <p className="text-sm text-blue-800">
+                          💡 <strong>Trading Tip:</strong> Add your contact information to let interested buyers reach you directly. 
+                          You control what information is visible to others.
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Activity Statistics */}
