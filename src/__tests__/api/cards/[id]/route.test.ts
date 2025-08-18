@@ -76,7 +76,7 @@ describe('/api/cards/[id]', () => {
         rarity: 'Rare',
         cardNumber: '1/100',
         year: 2023,
-        isActive: true,
+        status: 'ACTIVE',
         createdAt: new Date(),
         updatedAt: new Date(),
         sellerId: 'seller-123',
@@ -101,7 +101,7 @@ describe('/api/cards/[id]', () => {
       expect(prisma.card.findFirst).toHaveBeenCalledWith({
         where: {
           id: 'card-123',
-          isActive: true
+          status: 'ACTIVE'
         },
         include: {
           seller: {
@@ -174,13 +174,13 @@ describe('/api/cards/[id]', () => {
         id: cardId,
         title: 'Test Card',
         sellerId: 'user-123',
-        isActive: true
+        status: 'ACTIVE'
       })
 
       // Mock card update (soft delete)
       mockedPrisma.card.update.mockResolvedValue({
         id: cardId,
-        isActive: false
+        status: 'DELETED'
       })
 
       const request = createMockRequest()
@@ -192,7 +192,7 @@ describe('/api/cards/[id]', () => {
       expect(data.message).toBe('Card deleted successfully')
       expect(mockedPrisma.card.update).toHaveBeenCalledWith({
         where: { id: cardId },
-        data: { isActive: false }
+        data: { status: 'DELETED' }
       })
     })
 
@@ -251,7 +251,7 @@ describe('/api/cards/[id]', () => {
       mockedPrisma.card.findFirst.mockResolvedValue({
         id: cardId,
         sellerId: 'user-123',
-        isActive: true
+        status: 'ACTIVE'
       })
       mockedPrisma.card.update.mockRejectedValue(new Error('Database error'))
 
@@ -285,7 +285,7 @@ describe('/api/cards/[id]', () => {
         price: 199.99,
         year: 2000,
         sellerId: 'user-123',
-        isActive: true,
+        status: 'ACTIVE',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         seller: {
@@ -298,7 +298,9 @@ describe('/api/cards/[id]', () => {
       ;(prisma.card.findFirst as jest.Mock).mockResolvedValue({
         id: 'card-123',
         sellerId: 'user-123',
-        isActive: true,
+        status: 'ACTIVE',
+        imageUrls: '[]',
+        price: 150.00,
       })
       ;(prisma.card.update as jest.Mock).mockResolvedValue(updatedCard)
 
@@ -326,6 +328,7 @@ describe('/api/cards/[id]', () => {
           cardNumber: '1/100',
           year: 2000,
           price: 199.99,
+          imageUrls: '[]',
         },
         include: {
           seller: {
@@ -333,6 +336,16 @@ describe('/api/cards/[id]', () => {
               id: true,
               name: true,
               username: true,
+              contactEmail: true,
+              contactPhone: true,
+              contactDiscord: true,
+              contactTelegram: true,
+              preferredContactMethod: true,
+              contactNote: true,
+              showEmail: true,
+              showPhone: true,
+              showDiscord: true,
+              showTelegram: true,
             }
           }
         }
@@ -355,7 +368,9 @@ describe('/api/cards/[id]', () => {
       ;(prisma.card.findFirst as jest.Mock).mockResolvedValue({
         id: 'card-123',
         sellerId: 'user-123',
-        isActive: true,
+        status: 'ACTIVE',
+        imageUrls: '[]',
+        price: 150.00,
       })
       ;(prisma.card.update as jest.Mock).mockResolvedValue({
         id: 'card-123',
@@ -381,6 +396,7 @@ describe('/api/cards/[id]', () => {
           cardNumber: null,
           year: null,
           price: 199.99,
+          imageUrls: '[]',
         },
         include: {
           seller: {
@@ -388,6 +404,16 @@ describe('/api/cards/[id]', () => {
               id: true,
               name: true,
               username: true,
+              contactEmail: true,
+              contactPhone: true,
+              contactDiscord: true,
+              contactTelegram: true,
+              preferredContactMethod: true,
+              contactNote: true,
+              showEmail: true,
+              showPhone: true,
+              showDiscord: true,
+              showTelegram: true,
             }
           }
         }

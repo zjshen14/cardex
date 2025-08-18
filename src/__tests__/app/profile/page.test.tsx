@@ -44,7 +44,6 @@ const mockProfileData = {
   showTelegram: false,
   _count: {
     cards: 5,
-    purchases: 3,
     sales: 2,
     watchlist: 4
   }
@@ -116,7 +115,6 @@ describe('Profile Page', () => {
     // Check activity statistics
     expect(screen.getByText('Cards Listed')).toBeInTheDocument()
     expect(screen.getByText('Cards Sold')).toBeInTheDocument()
-    expect(screen.getByText('Cards Bought')).toBeInTheDocument()
     expect(screen.getByText('Watchlist Items')).toBeInTheDocument()
   })
 

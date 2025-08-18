@@ -17,12 +17,13 @@ describe('Hero', () => {
     expect(screen.getByText(/Discover rare finds and build your dream collection/)).toBeInTheDocument()
   })
 
-  it('should render Start Browsing button', () => {
+  it('should render Start Browsing link', () => {
     render(<Hero />)
 
-    const startBrowsingButton = screen.getByRole('button', { name: 'Start Browsing' })
-    expect(startBrowsingButton).toBeInTheDocument()
-    expect(startBrowsingButton).toHaveClass('bg-white', 'text-blue-600')
+    const startBrowsingLink = screen.getByRole('link', { name: 'Start Browsing' })
+    expect(startBrowsingLink).toBeInTheDocument()
+    expect(startBrowsingLink).toHaveAttribute('href', '/cards')
+    expect(startBrowsingLink).toHaveClass('bg-white', 'text-blue-600')
   })
 
   it('should render Sell Your Cards link with correct href', () => {

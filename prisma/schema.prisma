@@ -58,7 +58,7 @@ model Card {
   rarity      String?
   cardNumber  String?
   year        Int?
-  isActive    Boolean  @default(true)
+  status      CardStatus @default(ACTIVE)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -111,6 +111,13 @@ enum Condition {
   LIGHT_PLAYED
   PLAYED
   POOR
+}
+
+enum CardStatus {
+  ACTIVE
+  SOLD
+  ARCHIVED
+  DELETED
 }
 
 enum TransactionStatus {

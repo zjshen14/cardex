@@ -266,7 +266,7 @@ describe('/api/cards', () => {
           title: 'Charizard',
           condition: 'MINT',
           price: 100.00,
-          isActive: true,
+          status: 'ACTIVE',
           seller: {
             id: 'user-1',
             name: 'Test User',
@@ -278,7 +278,7 @@ describe('/api/cards', () => {
           title: 'Blastoise',
           condition: 'NEAR_MINT',
           price: 75.00,
-          isActive: true,
+          status: 'ACTIVE',
           seller: {
             id: 'user-2',
             name: 'Another User',
@@ -298,7 +298,7 @@ describe('/api/cards', () => {
       expect(data[1].title).toBe('Blastoise')
       expect(mockedPrisma.card.findMany).toHaveBeenCalledWith({
         where: {
-          isActive: true
+          status: 'ACTIVE'
         },
         include: {
           seller: {
@@ -332,7 +332,7 @@ describe('/api/cards', () => {
           title: 'Expensive Card',
           condition: 'MINT',
           price: 500.00,
-          isActive: true,
+          status: 'ACTIVE',
           createdAt: new Date('2025-08-15T10:00:00.000Z'),
           seller: { id: 'user-1', name: 'Test User', username: null }
         },
@@ -341,7 +341,7 @@ describe('/api/cards', () => {
           title: 'Cheaper Card',
           condition: 'NEAR_MINT',
           price: 100.00,
-          isActive: true,
+          status: 'ACTIVE',
           createdAt: new Date('2025-08-15T11:00:00.000Z'),
           seller: { id: 'user-2', name: 'Another User', username: null }
         }
@@ -355,7 +355,7 @@ describe('/api/cards', () => {
       expect(data).toHaveLength(2)
       expect(mockedPrisma.card.findMany).toHaveBeenCalledWith({
         where: {
-          isActive: true,
+          status: 'ACTIVE',
           createdAt: { gte: expect.any(Date) }
         },
         include: {
@@ -379,7 +379,7 @@ describe('/api/cards', () => {
           condition: 'MINT',
           price: 100.00,
           category: 'Trading Cards',
-          isActive: true,
+          status: 'ACTIVE',
           seller: { id: 'user-1', name: 'Test User', username: null }
         }
       ]
@@ -391,7 +391,7 @@ describe('/api/cards', () => {
       expect(response.status).toBe(200)
       expect(mockedPrisma.card.findMany).toHaveBeenCalledWith({
         where: {
-          isActive: true,
+          status: 'ACTIVE',
           category: 'Trading Cards'
         },
         include: {

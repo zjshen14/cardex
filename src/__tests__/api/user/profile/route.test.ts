@@ -89,7 +89,6 @@ describe('/api/user/profile', () => {
           _count: {
             select: {
               cards: true,
-              purchases: true,
               sales: true,
               watchlist: true
             }
@@ -194,7 +193,6 @@ describe('/api/user/profile', () => {
           _count: {
             select: {
               cards: true,
-              purchases: true,
               sales: true,
               watchlist: true
             }

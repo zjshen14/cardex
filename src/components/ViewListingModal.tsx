@@ -14,7 +14,7 @@ interface Card {
   cardNumber: string | null
   year: number | null
   imageUrls: string
-  isActive: boolean
+  status: string
   createdAt: string
   updatedAt: string
   seller: {
@@ -118,8 +118,16 @@ export function ViewListingModal({ isOpen, card, onClose }: ViewListingModalProp
               <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getConditionColor(card.condition)}`}>
                 {formatCondition(card.condition)}
               </span>
-              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${card.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
-                {card.isActive ? 'Active' : 'Inactive'}
+              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                card.status === 'ACTIVE' ? 'bg-green-100 text-green-800' :
+                card.status === 'SOLD' ? 'bg-red-100 text-red-800' :
+                card.status === 'ARCHIVED' ? 'bg-yellow-100 text-yellow-800' :
+                'bg-gray-100 text-gray-800'
+              }`}>
+                {card.status === 'ACTIVE' ? 'Active' :
+                 card.status === 'SOLD' ? 'Sold' :
+                 card.status === 'ARCHIVED' ? 'Archived' :
+                 card.status === 'DELETED' ? 'Deleted' : 'Unknown'}
               </span>
             </div>
           </div>

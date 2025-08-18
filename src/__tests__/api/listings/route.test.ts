@@ -71,7 +71,7 @@ describe('/api/listings', () => {
           condition: 'MINT',
           price: 100.00,
           category: 'Trading Cards',
-          isActive: true,
+          status: 'ACTIVE',
           createdAt: '2024-01-01T00:00:00Z',
           seller: {
             id: 'user-123',
@@ -98,7 +98,7 @@ describe('/api/listings', () => {
           condition: 'NEAR_MINT',
           price: 75.00,
           category: 'Trading Cards',
-          isActive: true,
+          status: 'ACTIVE',
           createdAt: '2024-01-03T00:00:00Z',
           seller: {
             id: 'user-123',
@@ -124,7 +124,7 @@ describe('/api/listings', () => {
       expect(mockedPrisma.card.findMany).toHaveBeenCalledWith({
         where: {
           sellerId: 'user-123',
-          isActive: true
+          status: { not: 'DELETED' }
         },
         include: {
           seller: {
@@ -222,7 +222,7 @@ describe('/api/listings', () => {
         {
           id: 'card-1',
           title: 'Active Card',
-          isActive: true,
+          status: 'ACTIVE',
           seller: { id: 'user-123', name: 'Test', username: 'test' },
           transactions: []
         }
@@ -235,7 +235,7 @@ describe('/api/listings', () => {
         expect.objectContaining({
           where: {
             sellerId: 'user-123',
-            isActive: true
+            status: { not: 'DELETED' }
           }
         })
       )

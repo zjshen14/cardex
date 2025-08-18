@@ -14,7 +14,7 @@ const mockCard = {
   cardNumber: '4/102',
   year: 1999,
   imageUrls: '["https://example.com/image1.jpg", "https://example.com/image2.jpg"]',
-  isActive: true,
+  status: 'ACTIVE',
   createdAt: '2023-01-15T10:30:00Z',
   updatedAt: '2023-01-20T14:45:00Z',
   seller: {
@@ -59,7 +59,7 @@ const mockCardMinimal = {
   cardNumber: null,
   year: null,
   imageUrls: '[]',
-  isActive: false,
+  status: 'SOLD',
   createdAt: '2023-02-01T12:00:00Z',
   updatedAt: '2023-02-01T12:00:00Z',
   seller: {
@@ -158,7 +158,7 @@ describe('ViewListingModal', () => {
     expect(screen.getByText('Simple Card')).toBeInTheDocument()
     expect(screen.getByText('$25.00')).toBeInTheDocument()
     expect(screen.getByText('Good')).toBeInTheDocument()
-    expect(screen.getByText('Inactive')).toBeInTheDocument()
+    expect(screen.getByText('Sold')).toBeInTheDocument()
     expect(screen.getByText('Gaming Cards')).toBeInTheDocument()
 
     // Should show anonymous seller
@@ -361,7 +361,7 @@ describe('ViewListingModal', () => {
       />
     )
 
-    expect(screen.getByText('Inactive')).toHaveClass('bg-gray-100', 'text-gray-800')
+    expect(screen.getByText('Sold')).toHaveClass('bg-red-100', 'text-red-800')
   })
 
   it('should limit transaction history display to 3 items', () => {

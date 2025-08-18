@@ -14,7 +14,7 @@ export async function GET(
     const card = await prisma.card.findFirst({
       where: {
         id: cardId,
-        isActive: true
+        status: 'ACTIVE'
       },
       include: {
         seller: {
@@ -89,7 +89,7 @@ export async function DELETE(
       where: {
         id: cardId,
         sellerId: user.id,
-        isActive: true
+        status: { not: 'DELETED' }
       }
     })
 
@@ -105,10 +105,10 @@ export async function DELETE(
       await cleanupImages(card.imageUrls)
     }
 
-    // Soft delete - set isActive to false instead of actually deleting
+    // Soft delete - set status to DELETED instead of actually deleting
     await prisma.card.update({
       where: { id: cardId },
-      data: { isActive: false }
+      data: { status: 'DELETED' }
     })
 
     return NextResponse.json(
@@ -191,7 +191,7 @@ export async function PUT(
       where: {
         id: cardId,
         sellerId: user.id,
-        isActive: true
+        status: { not: 'DELETED' }
       }
     })
 

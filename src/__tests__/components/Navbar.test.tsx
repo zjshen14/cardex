@@ -89,7 +89,6 @@ describe('Navbar', () => {
     await waitFor(() => {
       expect(screen.getByText('Profile')).toBeInTheDocument()
       expect(screen.getByText('My Listings')).toBeInTheDocument()
-      expect(screen.getByText('Purchases')).toBeInTheDocument()
       expect(screen.getByText('Sign Out')).toBeInTheDocument()
     })
   })

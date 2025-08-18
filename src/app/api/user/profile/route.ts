@@ -37,7 +37,6 @@ export async function GET() {
         _count: {
           select: {
             cards: true,
-            purchases: true,
             sales: true,
             watchlist: true
           }
@@ -162,7 +161,6 @@ export async function PUT(request: NextRequest) {
         _count: {
           select: {
             cards: true,
-            purchases: true,
             sales: true,
             watchlist: true
           }

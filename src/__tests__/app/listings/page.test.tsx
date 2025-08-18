@@ -30,7 +30,7 @@ const mockCards = [
     cardNumber: '4/102',
     year: 1999,
     imageUrls: '[]',
-    isActive: true,
+    status: 'ACTIVE',
     createdAt: '2024-01-01T00:00:00Z',
     updatedAt: '2024-01-01T00:00:00Z',
     seller: {
@@ -63,7 +63,7 @@ const mockCards = [
     cardNumber: null,
     year: null,
     imageUrls: '[]',
-    isActive: true,
+    status: 'ACTIVE',
     createdAt: '2024-01-03T00:00:00Z',
     updatedAt: '2024-01-03T00:00:00Z',
     seller: {

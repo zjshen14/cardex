@@ -10,11 +10,20 @@ const mockSignIn = signIn as jest.MockedFunction<typeof signIn>
 // Mock fetch
 global.fetch = jest.fn()
 
-// Mock window.location
-delete (window as any).location
-;(window as any).location = {
-  href: 'http://localhost:3000',
-}
+// Suppress JSDOM navigation warnings
+const originalConsoleError = console.error
+beforeAll(() => {
+  console.error = (...args: any[]) => {
+    if (args[0]?.message?.includes('Not implemented: navigation')) {
+      return // Suppress JSDOM navigation warnings
+    }
+    originalConsoleError(...args)
+  }
+})
+
+afterAll(() => {
+  console.error = originalConsoleError
+})
 
 describe('SignUp Page', () => {
   beforeEach(() => {

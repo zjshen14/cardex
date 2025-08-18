@@ -127,7 +127,7 @@ export async function GET(request: NextRequest) {
     const category = searchParams.get('category')
 
     let whereClause: any = {
-      isActive: true
+      status: 'ACTIVE' // Only show active cards in browsing, exclude SOLD and DELETED
     }
 
     // Add category filter if specified

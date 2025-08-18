@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { Edit, Trash2, Eye, DollarSign } from 'lucide-react'
+import { Edit, Trash2, Eye, DollarSign, CheckCircle } from 'lucide-react'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { LoadingModal } from '@/components/LoadingModal'
 import { EditListingDialog } from '@/components/EditListingDialog'
@@ -21,7 +21,7 @@ interface Card {
   cardNumber: string | null
   year: number | null
   imageUrls: string
-  isActive: boolean
+  status: string
   createdAt: string
   updatedAt: string
   seller: {
@@ -56,6 +56,10 @@ export default function MyCardsPage() {
   const [editStatus, setEditStatus] = useState<'loading' | 'success' | 'error' | null>(null)
   const [editMessage, setEditMessage] = useState('')
   const [viewCard, setViewCard] = useState<Card | null>(null)
+  const [markingSoldCard, setMarkingSoldCard] = useState<Card | null>(null)
+  const [isMarkingSold, setIsMarkingSold] = useState(false)
+  const [soldStatus, setSoldStatus] = useState<'loading' | 'success' | 'error' | null>(null)
+  const [soldMessage, setSoldMessage] = useState('')
 
   useEffect(() => {
     const fetchMyCards = async () => {
@@ -105,6 +109,15 @@ export default function MyCardsPage() {
       case 'COMPLETED': return 'bg-green-100 text-green-800'
       case 'CANCELLED': return 'bg-red-100 text-red-800'
       case 'REFUNDED': return 'bg-purple-100 text-purple-800'
+      default: return 'bg-gray-100 text-gray-800'
+    }
+  }
+
+  const getCardStatusColor = (status: string) => {
+    switch (status) {
+      case 'ACTIVE': return 'bg-green-100 text-green-800'
+      case 'SOLD': return 'bg-red-100 text-red-800'
+      case 'ARCHIVED': return 'bg-gray-100 text-gray-800'
       default: return 'bg-gray-100 text-gray-800'
     }
   }
@@ -218,6 +231,62 @@ export default function MyCardsPage() {
     setViewCard(null)
   }
 
+  const handleMarkAsSoldClick = (card: Card) => {
+    setMarkingSoldCard(card)
+  }
+
+  const handleMarkAsSoldConfirm = async () => {
+    if (!markingSoldCard) return
+
+    setIsMarkingSold(true)
+    setSoldStatus('loading')
+    setSoldMessage('')
+    
+    try {
+      const response = await fetch(`/api/cards/${markingSoldCard.id}/status`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: 'SOLD' }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to mark listing as sold')
+      }
+
+      const updatedCard = await response.json()
+
+      // Update the card in the list
+      setCards(prev => prev.map(card => 
+        card.id === markingSoldCard.id ? updatedCard : card
+      ))
+
+      setSoldStatus('success')
+      setSoldMessage('Your listing has been marked as sold!')
+      
+      // Close confirmation dialog
+      setMarkingSoldCard(null)
+      
+    } catch (error) {
+      console.error('Error marking card as sold:', error)
+      setSoldStatus('error')
+      setSoldMessage(error instanceof Error ? error.message : 'Failed to mark listing as sold')
+    } finally {
+      setIsMarkingSold(false)
+    }
+  }
+
+  const handleMarkAsSoldCancel = () => {
+    setMarkingSoldCard(null)
+  }
+
+  const handleSoldStatusClose = () => {
+    setSoldStatus(null)
+    setSoldMessage('')
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -280,6 +349,9 @@ export default function MyCardsPage() {
                           <span className="bg-gray-100 text-gray-800 px-2 py-1 rounded-full">
                             {formatCondition(card.condition)}
                           </span>
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getCardStatusColor(card.status)}`}>
+                            {card.status}
+                          </span>
                           <span className="font-semibold text-lg text-green-600">
                             ${card.price.toFixed(2)}
                           </span>
@@ -297,15 +369,25 @@ export default function MyCardsPage() {
                           onClick={() => handleEditClick(card)}
                           className="p-2 text-blue-600 hover:bg-blue-100 rounded-md"
                           title="Edit listing"
-                          disabled={isDeleting || isEditing}
+                          disabled={isDeleting || isEditing || isMarkingSold}
                         >
                           <Edit className="h-4 w-4" />
                         </button>
+                        {card.status === 'ACTIVE' && (
+                          <button
+                            onClick={() => handleMarkAsSoldClick(card)}
+                            className="p-2 text-green-600 hover:bg-green-100 rounded-md"
+                            title="Mark as sold"
+                            disabled={isDeleting || isEditing || isMarkingSold}
+                          >
+                            <CheckCircle className="h-4 w-4" />
+                          </button>
+                        )}
                         <button
                           onClick={() => handleDeleteClick(card)}
                           className="p-2 text-red-600 hover:bg-red-100 rounded-md"
                           title="Delete listing"
-                          disabled={isDeleting || isEditing}
+                          disabled={isDeleting || isEditing || isMarkingSold}
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
@@ -413,6 +495,31 @@ export default function MyCardsPage() {
         onSuccess={handleEditStatusClose}
         onError={handleEditStatusClose}
         onClose={handleEditStatusClose}
+      />
+
+      {/* Mark as Sold Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={markingSoldCard !== null}
+        title="Mark as Sold"
+        message={`Are you sure you want to mark "${markingSoldCard?.title}" as sold? This will remove it from public browsing.`}
+        confirmText="Mark as Sold"
+        cancelText="Cancel"
+        variant="default"
+        onConfirm={handleMarkAsSoldConfirm}
+        onCancel={handleMarkAsSoldCancel}
+      />
+
+      {/* Mark as Sold Status Modal */}
+      <LoadingModal
+        isOpen={soldStatus !== null}
+        status={soldStatus || 'loading'}
+        title="Mark as Sold"
+        loadingMessage="Marking your listing as sold..."
+        successMessage={soldMessage}
+        errorMessage={soldMessage}
+        onSuccess={handleSoldStatusClose}
+        onError={handleSoldStatusClose}
+        onClose={handleSoldStatusClose}
       />
 
       {/* View Listing Modal */}

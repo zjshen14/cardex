@@ -24,7 +24,6 @@ interface UserProfile {
   showTelegram: boolean
   _count: {
     cards: number
-    purchases: number
     sales: number
     watchlist: number
   }
@@ -598,11 +597,6 @@ export default function ProfilePage() {
                     <div className="bg-green-50 rounded-lg p-4 text-center">
                       <div className="text-2xl font-bold text-green-600">{profile._count.sales}</div>
                       <div className="text-sm text-green-800">Cards Sold</div>
-                    </div>
-                    
-                    <div className="bg-purple-50 rounded-lg p-4 text-center">
-                      <div className="text-2xl font-bold text-purple-600">{profile._count.purchases}</div>
-                      <div className="text-sm text-purple-800">Cards Bought</div>
                     </div>
                     
                     <div className="bg-orange-50 rounded-lg p-4 text-center">

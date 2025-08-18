@@ -51,9 +51,6 @@ export function Navbar() {
                       <Link href="/listings" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                         My Listings
                       </Link>
-                      <Link href="/purchases" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                        Purchases
-                      </Link>
                       <button
                         onClick={() => signOut()}
                         className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
