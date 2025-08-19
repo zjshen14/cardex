@@ -7,7 +7,7 @@ import { Upload, X } from 'lucide-react'
 import { LoadingModal } from '@/components/LoadingModal'
 
 export default function SellPage() {
-  const { data: session, status } = useSession()
+  const { status } = useSession()
   const router = useRouter()
 
   const [formData, setFormData] = useState({

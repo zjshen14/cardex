@@ -2,6 +2,7 @@ import { POST } from '@/app/api/upload/route'
 import { NextRequest } from 'next/server'
 import { existsSync, unlinkSync, readdirSync } from 'fs'
 import { join } from 'path'
+import * as fsPromises from 'fs/promises'
 
 // Mock file system functions for testing
 jest.mock('fs/promises', () => ({
@@ -14,8 +15,8 @@ jest.mock('fs', () => ({
 }))
 
 describe('/api/upload', () => {
-  const mockWriteFile = require('fs/promises').writeFile
-  const mockMkdir = require('fs/promises').mkdir
+  const mockWriteFile = fsPromises.writeFile as jest.MockedFunction<typeof fsPromises.writeFile>
+  const mockMkdir = fsPromises.mkdir as jest.MockedFunction<typeof fsPromises.mkdir>
   const mockExistsSync = existsSync as jest.MockedFunction<typeof existsSync>
 
   beforeEach(() => {
@@ -33,7 +34,7 @@ describe('/api/upload', () => {
             unlinkSync(join(uploadDir, file))
           }
         })
-      } catch (e) {
+      } catch {
         // Ignore cleanup errors in tests
       }
     }

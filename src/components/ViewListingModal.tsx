@@ -83,7 +83,7 @@ export function ViewListingModal({ isOpen, card, onClose }: ViewListingModalProp
   let imageUrls: string[] = []
   try {
     imageUrls = typeof card.imageUrls === 'string' ? JSON.parse(card.imageUrls) : card.imageUrls
-  } catch (error) {
+  } catch {
     imageUrls = []
   }
 

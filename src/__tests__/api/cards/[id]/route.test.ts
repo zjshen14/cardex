@@ -9,7 +9,7 @@ jest.mock('@/lib/imageCleanup', () => ({
 }))
 
 // Helper function to create mock request with proper json() method
-const createMockRequest = (data?: any) => ({
+const createMockRequest = (data?: Record<string, unknown>) => ({
   json: jest.fn().mockResolvedValue(data || {}),
 }) as unknown as NextRequest
 
@@ -55,7 +55,7 @@ jest.mock('@/lib/prisma', () => ({
 }))
 
 const mockedGetServerSession = getServerSession as jest.MockedFunction<typeof getServerSession>
-const mockedPrisma = prisma as any
+const mockedPrisma = prisma as jest.Mocked<typeof prisma>
 
 describe('/api/cards/[id]', () => {
   beforeEach(() => {

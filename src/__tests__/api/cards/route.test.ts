@@ -56,7 +56,7 @@ jest.mock('@/lib/prisma', () => ({
 }))
 
 const mockedGetServerSession = getServerSession as jest.MockedFunction<typeof getServerSession>
-const mockedPrisma = prisma as any
+const mockedPrisma = prisma as jest.Mocked<typeof prisma>
 
 describe('/api/cards', () => {
   beforeEach(() => {
@@ -386,7 +386,6 @@ describe('/api/cards', () => {
       mockedPrisma.card.findMany.mockResolvedValue(mockCards)
 
       const response = await GET(mockNextRequest('http://localhost:3000/api/cards?category=Trading%20Cards'))
-      const data = await response.json()
 
       expect(response.status).toBe(200)
       expect(mockedPrisma.card.findMany).toHaveBeenCalledWith({

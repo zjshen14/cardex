@@ -126,7 +126,7 @@ export async function GET(request: NextRequest) {
     const limit = searchParams.get('limit')
     const category = searchParams.get('category')
 
-    let whereClause: any = {
+    const whereClause: Record<string, unknown> = {
       status: 'ACTIVE' // Only show active cards in browsing, exclude SOLD and DELETED
     }
 
@@ -135,7 +135,7 @@ export async function GET(request: NextRequest) {
       whereClause.category = category
     }
 
-    let orderByClause: any = {
+    let orderByClause: Record<string, unknown> = {
       createdAt: 'desc'
     }
 

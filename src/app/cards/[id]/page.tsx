@@ -1,11 +1,11 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { ArrowLeft, Heart, Share2, MessageCircle, User, Calendar, Shield } from 'lucide-react'
+import { ArrowLeft, Heart, Share2, User } from 'lucide-react'
 import { ContactSellerModal } from '@/components/ContactSellerModal'
 
 interface Card {
@@ -40,7 +40,6 @@ interface Card {
 
 export default function CardDetailsPage() {
   const params = useParams()
-  const router = useRouter()
   const { data: session } = useSession()
   const [card, setCard] = useState<Card | null>(null)
   const [loading, setLoading] = useState(true)

@@ -1,6 +1,7 @@
 import { createMocks } from 'node-mocks-http'
 import { POST } from '../../../app/api/auth/register/route'
 import bcrypt from 'bcryptjs'
+import { prisma } from '../../../lib/prisma'
 
 // Mock Prisma
 jest.mock('../../../lib/prisma', () => ({
@@ -17,7 +18,6 @@ jest.mock('bcryptjs', () => ({
   hash: jest.fn(),
 }))
 
-const { prisma } = require('../../../lib/prisma')
 const mockPrisma = prisma as jest.Mocked<typeof prisma>
 const mockBcrypt = bcrypt as jest.Mocked<typeof bcrypt>
 
@@ -40,7 +40,7 @@ describe.skip('/api/auth/register', () => {
       name: null,
       username: null,
     }
-    mockPrisma.user.create.mockResolvedValue(mockUser as any)
+    mockPrisma.user.create.mockResolvedValue(mockUser)
 
     const { req } = createMocks({
       method: 'POST',
@@ -56,7 +56,7 @@ describe.skip('/api/auth/register', () => {
       password: 'password123',
     })
 
-    const response = await POST(req as any)
+    const response = await POST(req as Request)
     const data = await response.json()
 
     expect(response.status).toBe(200)
@@ -87,7 +87,7 @@ describe.skip('/api/auth/register', () => {
     mockPrisma.user.findUnique.mockResolvedValue({
       id: '1',
       email: 'test@example.com',
-    } as any)
+    })
 
     const { req } = createMocks({
       method: 'POST',
@@ -102,7 +102,7 @@ describe.skip('/api/auth/register', () => {
       password: 'password123',
     })
 
-    const response = await POST(req as any)
+    const response = await POST(req as Request)
     const data = await response.json()
 
     expect(response.status).toBe(400)
@@ -122,7 +122,7 @@ describe.skip('/api/auth/register', () => {
       email: 'test@example.com',
     })
 
-    const response = await POST(req as any)
+    const response = await POST(req as Request)
     const data = await response.json()
 
     expect(response.status).toBe(400)
@@ -145,7 +145,7 @@ describe.skip('/api/auth/register', () => {
       password: 'password123',
     })
 
-    const response = await POST(req as any)
+    const response = await POST(req as Request)
     const data = await response.json()
 
     expect(response.status).toBe(500)

@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { signIn } from 'next-auth/react'
 import SignUpPage from '@/app/auth/signup/page'
@@ -13,7 +13,7 @@ global.fetch = jest.fn()
 // Suppress JSDOM navigation warnings
 const originalConsoleError = console.error
 beforeAll(() => {
-  console.error = (...args: any[]) => {
+  console.error = (...args: unknown[]) => {
     if (args[0]?.message?.includes('Not implemented: navigation')) {
       return // Suppress JSDOM navigation warnings
     }
@@ -72,7 +72,7 @@ describe('SignUp Page', () => {
     mockSignIn.mockResolvedValueOnce({
       ok: true,
       error: null
-    } as any)
+    })
 
     render(<SignUpPage />)
 

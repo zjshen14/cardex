@@ -59,7 +59,7 @@ describe('Profile Page', () => {
       forward: jest.fn(),
       refresh: jest.fn(),
       prefetch: jest.fn()
-    } as any)
+    })
   })
 
   it('should show loading spinner when session is loading', () => {

@@ -43,7 +43,7 @@ jest.mock('@/lib/prisma', () => ({
 }))
 
 const mockedGetServerSession = getServerSession as jest.MockedFunction<typeof getServerSession>
-const mockedPrisma = prisma as any
+const mockedPrisma = prisma as jest.Mocked<typeof prisma>
 
 describe('/api/listings', () => {
   beforeEach(() => {

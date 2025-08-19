@@ -353,7 +353,7 @@ describe('ViewListingModal', () => {
     expect(screen.getByText('Active')).toHaveClass('bg-green-100', 'text-green-800')
 
     // Test inactive status
-    const { rerender } = render(
+    render(
       <ViewListingModal
         isOpen={true}
         card={mockCardMinimal}

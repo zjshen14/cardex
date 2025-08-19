@@ -153,7 +153,7 @@ describe('/api/user/profile', () => {
         })
       }
 
-      const response = await PUT(mockRequest as any)
+      const response = await PUT(mockRequest as Request)
       const data = await response.json()
 
       expect(response.status).toBe(200)
@@ -208,7 +208,7 @@ describe('/api/user/profile', () => {
         json: jest.fn().mockResolvedValue({ name: 'Test' })
       }
 
-      const response = await PUT(mockRequest as any)
+      const response = await PUT(mockRequest as Request)
       const data = await response.json()
 
       expect(response.status).toBe(401)
@@ -231,7 +231,7 @@ describe('/api/user/profile', () => {
         })
       }
 
-      const response = await PUT(mockRequest as any)
+      const response = await PUT(mockRequest as Request)
       const data = await response.json()
 
       expect(response.status).toBe(400)
@@ -249,7 +249,7 @@ describe('/api/user/profile', () => {
         })
       }
 
-      const response = await PUT(mockRequest as any)
+      const response = await PUT(mockRequest as Request)
       const data = await response.json()
 
       expect(response.status).toBe(400)
