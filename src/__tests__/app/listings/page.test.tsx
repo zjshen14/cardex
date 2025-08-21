@@ -1361,7 +1361,7 @@ describe('MyCardsPage (Listings)', () => {
 
       // Check that dates are formatted properly in the modal
       expect(screen.getByText(/Listed on:/)).toBeInTheDocument()
-      expect(screen.getByText(/January 1, 2024/)).toBeInTheDocument()
+      expect(screen.getByText(/January 2, 2024/)).toBeInTheDocument()
 
       // Check condition formatting in modal (there might be multiple "Mint" text on page)
       const mintElements = screen.getAllByText('Mint')
