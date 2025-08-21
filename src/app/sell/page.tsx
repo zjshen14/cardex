@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { Upload, X } from 'lucide-react'
@@ -36,8 +36,14 @@ export default function SellPage() {
     </div>
   }
 
+  // Handle unauthenticated redirect in useEffect to avoid setState during render
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/auth/signin')
+    }
+  }, [status, router])
+
   if (status === 'unauthenticated') {
-    router.push('/auth/signin')
     return null
   }
 

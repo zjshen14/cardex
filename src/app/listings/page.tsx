@@ -90,8 +90,14 @@ export default function MyCardsPage() {
     </div>
   }
 
+  // Handle unauthenticated redirect in useEffect to avoid setState during render
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/auth/signin')
+    }
+  }, [status, router])
+
   if (status === 'unauthenticated') {
-    router.push('/auth/signin')
     return null
   }
 
