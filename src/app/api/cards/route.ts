@@ -135,7 +135,7 @@ export async function GET(request: NextRequest) {
       whereClause.category = category
     }
 
-    let orderByClause: Record<string, unknown> = {
+    let orderByClause: Record<string, unknown> | Record<string, unknown>[] = {
       createdAt: 'desc'
     }
 

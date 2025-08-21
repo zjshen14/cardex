@@ -18,6 +18,20 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // Contact Information
+  contactEmail    String?
+  contactPhone    String?
+  contactDiscord  String?
+  contactTelegram String?
+  preferredContactMethod String?
+  contactNote     String?
+  
+  // Privacy Controls
+  showEmail       Boolean @default(false)
+  showPhone       Boolean @default(false)
+  showDiscord     Boolean @default(false)
+  showTelegram    Boolean @default(false)
+
   // Relations
   cards         Card[]
   purchases     Transaction[] @relation("Buyer")

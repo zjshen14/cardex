@@ -77,10 +77,10 @@ describe('/api/upload', () => {
       const data = await response.json()
 
       expect(response.status).toBe(200)
-      expect(data.success).toBe(true)
+      expect(data.message).toBe('Files uploaded successfully')
       expect(data.urls).toHaveLength(2)
-      expect(data.urls[0]).toMatch(/\/uploads\/cards\/card_\d+_\w+\.jpg/)
-      expect(data.urls[1]).toMatch(/\/uploads\/cards\/card_\d+_\w+\.png/)
+      expect(data.urls[0]).toMatch(/\/uploads\/cards\/\d+-\w+\.jpg/)
+      expect(data.urls[1]).toMatch(/\/uploads\/cards\/\d+-\w+\.png/)
       expect(mockWriteFile).toHaveBeenCalledTimes(2)
     })
 
@@ -177,7 +177,7 @@ describe('/api/upload', () => {
       const data = await response.json()
 
       expect(response.status).toBe(200)
-      expect(data.success).toBe(true)
+      expect(data.message).toBe('Files uploaded successfully')
       expect(data.urls).toHaveLength(4)
     })
 

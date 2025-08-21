@@ -52,7 +52,7 @@ model Card {
   description String?
   condition   Condition
   price       Float
-  imageUrls   String // JSON string for SQLite, native array for PostgreSQL
+  imageUrls   String   // JSON string for image URLs in SQLite
   category    String
   set         String?
   rarity      String?

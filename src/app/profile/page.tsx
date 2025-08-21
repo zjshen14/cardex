@@ -402,7 +402,7 @@ export default function ProfilePage() {
                           <div className="flex items-center space-x-2">
                             <p className="text-gray-900">{profile.contactEmail || 'Not set'}</p>
                             {profile.showEmail && profile.contactEmail && (
-                              <Eye className="h-4 w-4 text-green-500" title="Visible to buyers" />
+                              <Eye className="h-4 w-4 text-green-500"  />
                             )}
                           </div>
                         )}
@@ -442,7 +442,7 @@ export default function ProfilePage() {
                           <div className="flex items-center space-x-2">
                             <p className="text-gray-900">{profile.contactPhone || 'Not set'}</p>
                             {profile.showPhone && profile.contactPhone && (
-                              <Eye className="h-4 w-4 text-green-500" title="Visible to buyers" />
+                              <Eye className="h-4 w-4 text-green-500"  />
                             )}
                           </div>
                         )}
@@ -482,7 +482,7 @@ export default function ProfilePage() {
                           <div className="flex items-center space-x-2">
                             <p className="text-gray-900">{profile.contactDiscord || 'Not set'}</p>
                             {profile.showDiscord && profile.contactDiscord && (
-                              <Eye className="h-4 w-4 text-green-500" title="Visible to buyers" />
+                              <Eye className="h-4 w-4 text-green-500"  />
                             )}
                           </div>
                         )}
@@ -522,7 +522,7 @@ export default function ProfilePage() {
                           <div className="flex items-center space-x-2">
                             <p className="text-gray-900">{profile.contactTelegram || 'Not set'}</p>
                             {profile.showTelegram && profile.contactTelegram && (
-                              <Eye className="h-4 w-4 text-green-500" title="Visible to buyers" />
+                              <Eye className="h-4 w-4 text-green-500"  />
                             )}
                           </div>
                         )}

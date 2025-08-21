@@ -1,12 +1,13 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { Heart } from 'lucide-react'
+import { parseImageUrls } from '@/lib/imageUtils'
 
 interface Card {
   id: string
   title: string
   price: number
-  imageUrls: string
+  imageUrls: string | string[]
   condition: string
   category: string
   seller: {
@@ -27,16 +28,8 @@ export function CardItem({ card }: CardItemProps) {
     ).join(' ')
   }
 
-  // Parse imageUrls from JSON string
-  const getImageUrls = (): string[] => {
-    try {
-      return JSON.parse(card.imageUrls || '[]')
-    } catch {
-      return []
-    }
-  }
-
-  const imageUrls = getImageUrls()
+  // Parse imageUrls using utility function that handles both SQLite and PostgreSQL
+  const imageUrls = parseImageUrls(card.imageUrls)
   const firstImageUrl = imageUrls.length > 0 ? imageUrls[0] : null
 
   // Get seller display name

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { writeFile, mkdir } from 'fs/promises'
-import { join } from 'path'
-import { existsSync } from 'fs'
+import fs from 'fs/promises'
+import path from 'path'
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']
@@ -19,7 +18,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Maximum 5 files allowed' }, { status: 400 })
     }
 
-    const uploadDir = join(process.cwd(), 'public', 'uploads', 'cards')
     // Validate all files first
     for (const file of files) {
       if (!ALLOWED_TYPES.includes(file.type)) {
@@ -31,32 +29,54 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    if (!existsSync(uploadDir)) {
-      await mkdir(uploadDir, { recursive: true })
+    // Check if we should use Supabase storage (production)
+    const isProduction = process.env.NODE_ENV === 'production' && process.env.NEXT_PUBLIC_SUPABASE_URL
+    
+    if (isProduction) {
+      // Use Supabase storage for production
+      const { uploadMultipleImages } = await import('@/lib/supabaseStorage')
+      const urls = await uploadMultipleImages(files)
+      return NextResponse.json({ 
+        message: 'Files uploaded successfully',
+        urls 
+      })
+    } else {
+      // Use local filesystem for development
+      const uploadsDir = path.join(process.cwd(), 'public', 'uploads', 'cards')
+      
+      // Ensure uploads directory exists
+      try {
+        await fs.mkdir(uploadsDir, { recursive: true })
+      } catch (error) {
+        // Directory might already exist
+      }
+
+      const urls: string[] = []
+
+      for (const file of files) {
+        // Generate unique filename
+        const timestamp = Date.now()
+        const randomString = Math.random().toString(36).substring(2, 15)
+        const fileExtension = file.name.split('.').pop()
+        const fileName = `${timestamp}-${randomString}.${fileExtension}`
+        const filePath = path.join(uploadsDir, fileName)
+
+        // Convert File to Buffer
+        const arrayBuffer = await file.arrayBuffer()
+        const buffer = Buffer.from(arrayBuffer)
+
+        // Write file to disk
+        await fs.writeFile(filePath, buffer)
+
+        // Add public URL to results
+        urls.push(`/uploads/cards/${fileName}`)
+      }
+
+      return NextResponse.json({ 
+        message: 'Files uploaded successfully',
+        urls 
+      })
     }
-
-    const uploadPromises = files.map(async (file: File) => {
-      const bytes = await file.arrayBuffer()
-      const buffer = Buffer.from(bytes)
-      
-      // Generate unique filename
-      const timestamp = Date.now()
-      const randomId = Math.random().toString(36).substring(7)
-      const fileExtension = file.name.split('.').pop()
-      const filename = `card_${timestamp}_${randomId}.${fileExtension}`
-      
-      const filepath = join(uploadDir, filename)
-      await writeFile(filepath, buffer)
-      
-      return `/uploads/cards/${filename}`
-    })
-
-    const uploadedUrls = await Promise.all(uploadPromises)
-
-    return NextResponse.json({ 
-      success: true, 
-      urls: uploadedUrls 
-    })
 
   } catch (error) {
     console.error('Upload error:', error)

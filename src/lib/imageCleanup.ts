@@ -1,57 +1,45 @@
-import { unlink } from 'fs/promises'
-import { join } from 'path'
-import { existsSync } from 'fs'
+import fs from 'fs/promises'
+import path from 'path'
+import { parseImageUrls } from './imageUtils'
 
 /**
- * Cleans up image files from the filesystem
- * @param imageUrls Array of image URLs or JSON string containing URLs
+ * Cleans up image files using hybrid storage (local filesystem or Supabase)
+ * @param imageUrls Array of image URLs or JSON string (depending on database)
  * @returns Promise that resolves when cleanup is complete
  */
 export async function cleanupImages(imageUrls: string | string[]): Promise<void> {
   try {
-    // Parse imageUrls if it's a JSON string
-    let urls: string[] = []
-    if (typeof imageUrls === 'string') {
-      try {
-        urls = JSON.parse(imageUrls)
-      } catch (error) {
-        console.warn('Failed to parse imageUrls JSON:', error)
-        return
-      }
-    } else if (Array.isArray(imageUrls)) {
-      urls = imageUrls
-    }
-
-    if (!Array.isArray(urls) || urls.length === 0) {
+    // Parse imageUrls to handle both SQLite JSON strings and PostgreSQL arrays
+    const urlArray = parseImageUrls(imageUrls)
+    
+    if (urlArray.length === 0) {
       return
     }
 
-    // Clean up each image file
-    const cleanupPromises = urls.map(async (url) => {
-      try {
-        // Extract filename from URL (e.g., "/uploads/cards/filename.jpg" -> "filename.jpg")
-        if (!url.startsWith('/uploads/cards/')) {
-          console.warn('Skipping non-local image URL:', url)
-          return
+    // Check if we should use Supabase storage (production)
+    const isProduction = process.env.NODE_ENV === 'production' && process.env.NEXT_PUBLIC_SUPABASE_URL
+    
+    if (isProduction) {
+      // Use Supabase storage deletion for production
+      const { deleteMultipleImages } = await import('./supabaseStorage')
+      await deleteMultipleImages(urlArray)
+    } else {
+      // Use local filesystem deletion for development
+      for (const url of urlArray) {
+        try {
+          // Only process local URLs
+          if (url.startsWith('/uploads/cards/')) {
+            const filePath = path.join(process.cwd(), 'public', url)
+            await fs.unlink(filePath)
+          }
+        } catch (error) {
+          console.warn(`Failed to delete local file: ${url}`, error)
+          // Continue with other files
         }
-
-        const filename = url.replace('/uploads/cards/', '')
-        const filepath = join(process.cwd(), 'public', 'uploads', 'cards', filename)
-
-        // Check if file exists before attempting to delete
-        if (existsSync(filepath)) {
-          await unlink(filepath)
-          console.log('Deleted image file:', filepath)
-        } else {
-          console.warn('Image file not found:', filepath)
-        }
-      } catch (error) {
-        console.error('Error deleting image file:', url, error)
-        // Don't throw - continue with other files
       }
-    })
-
-    await Promise.allSettled(cleanupPromises)
+    }
+    
+    console.log('Cleaned up images:', urlArray.length, 'files')
   } catch (error) {
     console.error('Error in cleanupImages:', error)
     // Don't throw - image cleanup failure shouldn't prevent deletion
