@@ -29,19 +29,19 @@ export default function SellPage() {
   const [modalStatus, setModalStatus] = useState<'loading' | 'success' | 'error' | null>(null)
   const [isDragging, setIsDragging] = useState(false)
 
-  // Redirect if not authenticated
-  if (status === 'loading') {
-    return <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600" data-testid="loading-spinner"></div>
-    </div>
-  }
-
   // Handle unauthenticated redirect in useEffect to avoid setState during render
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/auth/signin')
     }
   }, [status, router])
+
+  // Redirect if not authenticated
+  if (status === 'loading') {
+    return <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600" data-testid="loading-spinner"></div>
+    </div>
+  }
 
   if (status === 'unauthenticated') {
     return null
