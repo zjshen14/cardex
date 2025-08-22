@@ -29,6 +29,9 @@ npm run test             # Run all tests
 npm run test:watch       # Run tests in watch mode
 npm run test:coverage    # Run tests with coverage report
 npm run lint            # Run ESLint
+
+# IMPORTANT: Always run complete CI pipeline before committing
+npm run lint && npm run test   # Full CI check (must pass before git commit)
 ```
 
 ## Architecture Overview
