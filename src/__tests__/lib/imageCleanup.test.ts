@@ -174,7 +174,7 @@ describe('Image Cleanup', () => {
       process.env.NODE_ENV = 'production'
       process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://test.supabase.co'
 
-      const { deleteMultipleImages } = require('@/lib/supabaseStorage')
+      const { deleteMultipleImages } = await import('@/lib/supabaseStorage')
       deleteMultipleImages.mockResolvedValue(undefined)
 
       const imageUrls = ['/uploads/cards/image1.jpg', '/uploads/cards/image2.jpg']
