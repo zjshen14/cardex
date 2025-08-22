@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
+import type { Session } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { Condition } from '@prisma/client'
+import { serializeImageUrls } from '@/lib/imageUtils'
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getServerSession(authOptions) as Session | null
     
     if (!session?.user) {
       return NextResponse.json(
@@ -79,9 +81,10 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // For development (SQLite), store imageUrls as JSON string
-    // For production (PostgreSQL), it will be stored as array
-    const imageUrlsData = Array.isArray(imageUrls) ? JSON.stringify(imageUrls) : '[]'
+    // Use hybrid approach for imageUrls (SQLite JSON string vs PostgreSQL array)
+    const imageUrlsArray = Array.isArray(imageUrls) ? imageUrls : []
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const imageUrlsData = serializeImageUrls(imageUrlsArray) as any
 
     const card = await prisma.card.create({
       data: {

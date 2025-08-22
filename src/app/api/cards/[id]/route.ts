@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
+import type { Session } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { cleanupImages } from '@/lib/imageCleanup'
+import { parseImageUrls, serializeImageUrls } from '@/lib/imageUtils'
 
 export async function GET(
   req: NextRequest,
@@ -60,7 +62,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getServerSession(authOptions) as Session | null as Session | null
     
     if (!session?.user) {
       return NextResponse.json(
@@ -130,7 +132,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getServerSession(authOptions) as Session | null as Session | null
     
     if (!session?.user) {
       return NextResponse.json(
@@ -206,18 +208,15 @@ export async function PUT(
     let imageUrlsData = existingCard.imageUrls // Keep existing if not provided
     if (body.imageUrls !== undefined) {
       const newImageUrls = Array.isArray(body.imageUrls) ? body.imageUrls : []
-      imageUrlsData = JSON.stringify(newImageUrls)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      imageUrlsData = serializeImageUrls(newImageUrls) as any
       
       // Clean up removed images
       if (existingCard.imageUrls) {
-        try {
-          const oldImageUrls = JSON.parse(existingCard.imageUrls)
-          const removedImages = oldImageUrls.filter((url: string) => !newImageUrls.includes(url))
-          if (removedImages.length > 0) {
-            await cleanupImages(removedImages)
-          }
-        } catch (error) {
-          console.warn('Failed to parse existing imageUrls for cleanup:', error)
+        const oldImageUrls = parseImageUrls(existingCard.imageUrls)
+        const removedImages = oldImageUrls.filter((url: string) => !newImageUrls.includes(url))
+        if (removedImages.length > 0) {
+          await cleanupImages(removedImages)
         }
       }
     }

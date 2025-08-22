@@ -1,5 +1,5 @@
 import { GET } from '@/app/api/listings/route'
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import { prisma } from '@/lib/prisma'
 
 // Mock dependencies

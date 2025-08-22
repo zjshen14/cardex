@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server'
 import { GET, DELETE, PUT } from '@/app/api/cards/[id]/route'
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import { prisma } from '@/lib/prisma'
 
 // Mock the image cleanup function

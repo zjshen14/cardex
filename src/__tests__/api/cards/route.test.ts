@@ -11,7 +11,7 @@ const mockNextRequest = (url: string, init?: RequestInit) => {
   } as NextRequest
 }
 import { POST, GET } from '@/app/api/cards/route'
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import { prisma } from '@/lib/prisma'
 
 // Mock dependencies

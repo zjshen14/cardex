@@ -143,7 +143,8 @@ export default function CardDetailsPage() {
   }
 
   const imageUrls = getImageUrls()
-  const isOwner = session?.user?.id === card.seller.id
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const isOwner = (session?.user as any)?.id === card.seller.id
 
   return (
     <>

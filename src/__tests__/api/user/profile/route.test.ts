@@ -30,7 +30,7 @@ jest.mock('@/lib/prisma', () => ({
 
 // Now import the route handlers after all mocks are set up
 import { GET, PUT } from '@/app/api/user/profile/route'
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import { prisma } from '@/lib/prisma'
 
 const mockGetServerSession = getServerSession as jest.MockedFunction<typeof getServerSession>
