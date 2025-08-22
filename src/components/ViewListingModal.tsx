@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { X, Calendar, DollarSign, Tag, Star, Hash, Trophy, User } from 'lucide-react'
 
 interface Card {
@@ -143,10 +144,12 @@ export function ViewListingModal({ isOpen, card, onClose }: ViewListingModalProp
                     <div className="grid grid-cols-2 gap-3">
                       {imageUrls.slice(0, 4).map((url, index) => (
                         <div key={index} className="relative aspect-square">
-                          <img
+                          <Image
                             src={url}
                             alt={`${card.title} - Image ${index + 1}`}
-                            className="w-full h-full object-cover rounded-lg border"
+                            fill
+                            className="object-cover rounded-lg border"
+                            unoptimized
                           />
                         </div>
                       ))}

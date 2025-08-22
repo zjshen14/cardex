@@ -30,6 +30,7 @@ export default function SignInPage() {
         router.push('/')
       }
     } catch (error) {
+      console.error('Sign in error:', error)
       setError('Something went wrong')
     }
 

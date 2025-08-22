@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { Upload, X } from 'lucide-react'
 import { LoadingModal } from '@/components/LoadingModal'
 
@@ -468,10 +469,13 @@ export default function SellPage() {
                 <div className="mt-4 grid grid-cols-2 md:grid-cols-5 gap-4">
                   {imagePreviews.map((preview, index) => (
                     <div key={index} className="relative">
-                      <img
+                      <Image
                         src={preview}
                         alt={`Preview ${index + 1}`}
+                        width={96}
+                        height={96}
                         className="w-full h-24 object-cover rounded-lg border"
+                        unoptimized
                       />
                       <button
                         type="button"

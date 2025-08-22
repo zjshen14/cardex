@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 import { X, Upload } from 'lucide-react'
 
 interface Card {
@@ -446,10 +447,13 @@ export function EditListingDialog({ isOpen, card, onClose, onSave, isLoading }: 
                     <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
                       {formData.imageUrls.map((url, index) => (
                         <div key={index} className="relative">
-                          <img
+                          <Image
                             src={url}
                             alt={`Current ${index + 1}`}
+                            width={80}
+                            height={80}
                             className="w-full h-20 object-cover rounded border"
+                            unoptimized
                           />
                           <button
                             type="button"
@@ -509,10 +513,13 @@ export function EditListingDialog({ isOpen, card, onClose, onSave, isLoading }: 
                     <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
                       {newImagePreviews.map((preview, index) => (
                         <div key={index} className="relative">
-                          <img
+                          <Image
                             src={preview}
                             alt={`New ${index + 1}`}
+                            width={80}
+                            height={80}
                             className="w-full h-20 object-cover rounded border border-green-300"
+                            unoptimized
                           />
                           <button
                             type="button"

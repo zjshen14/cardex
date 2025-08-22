@@ -57,6 +57,7 @@ export default function SignUpPage() {
         window.location.href = '/'
       }
     } catch (error) {
+      console.error('Sign up error:', error)
       setError('Something went wrong')
     }
 

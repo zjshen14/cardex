@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
       // Ensure uploads directory exists
       try {
         await fs.mkdir(uploadsDir, { recursive: true })
-      } catch (error) {
+      } catch {
         // Directory might already exist
       }
 
