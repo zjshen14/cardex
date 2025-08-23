@@ -5,7 +5,6 @@ import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Heart, Trash2, User, ArrowLeft } from 'lucide-react'
-import { LoadingModal } from '@/components/LoadingModal'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 
 interface WatchlistItem {
@@ -117,7 +116,16 @@ export default function WatchlistPage() {
   }
 
   if (status === 'loading' || loading) {
-    return <LoadingModal />
+    return (
+      <div className="min-h-screen bg-gray-50 py-12">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading watchlist...</p>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   if (!session) {
@@ -162,7 +170,15 @@ export default function WatchlistPage() {
 
   return (
     <>
-      <LoadingModal isOpen={removingId !== null} />
+      {/* Loading overlay for removing items */}
+      {removingId && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Removing from watchlist...</p>
+          </div>
+        </div>
+      )}
       
       <ConfirmDialog
         isOpen={showRemoveConfirm !== null}
@@ -175,7 +191,7 @@ export default function WatchlistPage() {
         title="Remove from Watchlist"
         message="Are you sure you want to remove this card from your watchlist?"
         confirmText="Remove"
-        confirmVariant="danger"
+        variant="danger"
       />
 
       <div className="min-h-screen bg-gray-50 py-8">
