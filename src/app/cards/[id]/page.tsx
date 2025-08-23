@@ -46,6 +46,8 @@ export default function CardDetailsPage() {
   const [error, setError] = useState<string | null>(null)
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
   const [showContactModal, setShowContactModal] = useState(false)
+  const [isInWatchlist, setIsInWatchlist] = useState(false)
+  const [watchlistLoading, setWatchlistLoading] = useState(false)
 
   useEffect(() => {
     const fetchCard = async () => {
@@ -76,6 +78,57 @@ export default function CardDetailsPage() {
       fetchCard()
     }
   }, [params.id])
+
+  // Check if card is in user's watchlist
+  useEffect(() => {
+    const checkWatchlistStatus = async () => {
+      if (!session || !card) return
+
+      try {
+        const response = await fetch('/api/watchlist')
+        if (response.ok) {
+          const watchlist = await response.json()
+          const isWatched = watchlist.some((item: { cardId: string }) => item.cardId === card.id)
+          setIsInWatchlist(isWatched)
+        }
+      } catch (error) {
+        console.error('Error checking watchlist status:', error)
+      }
+    }
+
+    checkWatchlistStatus()
+  }, [session, card])
+
+  const handleWatchlistToggle = async () => {
+    if (!session || !card) {
+      alert('Please sign in to use the watchlist feature')
+      return
+    }
+
+    setWatchlistLoading(true)
+    try {
+      const method = isInWatchlist ? 'DELETE' : 'POST'
+      const response = await fetch('/api/watchlist', {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ cardId: card.id }),
+      })
+
+      if (response.ok) {
+        setIsInWatchlist(!isInWatchlist)
+      } else {
+        const error = await response.json()
+        alert(error.error || `Failed to ${isInWatchlist ? 'remove from' : 'add to'} watchlist`)
+      }
+    } catch (error) {
+      console.error('Watchlist toggle error:', error)
+      alert(`Failed to ${isInWatchlist ? 'remove from' : 'add to'} watchlist`)
+    } finally {
+      setWatchlistLoading(false)
+    }
+  }
 
   const formatCondition = (condition: string) => {
     return condition.split('_').map(word => 
@@ -309,9 +362,22 @@ export default function CardDetailsPage() {
                     Contact Seller
                   </button>
                   <div className="flex space-x-3">
-                    <button className="flex-1 bg-white border border-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center">
-                      <Heart className="h-4 w-4 mr-2" />
-                      Add to Watchlist
+                    <button 
+                      onClick={handleWatchlistToggle}
+                      disabled={watchlistLoading}
+                      className={`flex-1 py-2 px-4 rounded-lg transition-colors flex items-center justify-center border ${
+                        isInWatchlist
+                          ? 'bg-red-50 border-red-300 text-red-700 hover:bg-red-100'
+                          : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                      } ${watchlistLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    >
+                      <Heart className={`h-4 w-4 mr-2 ${isInWatchlist ? 'fill-current' : ''}`} />
+                      {watchlistLoading 
+                        ? 'Loading...' 
+                        : isInWatchlist 
+                          ? 'Remove from Watchlist' 
+                          : 'Add to Watchlist'
+                      }
                     </button>
                     <button className="flex-1 bg-white border border-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center">
                       <Share2 className="h-4 w-4 mr-2" />

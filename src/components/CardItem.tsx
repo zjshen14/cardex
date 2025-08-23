@@ -1,3 +1,7 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import { useSession } from 'next-auth/react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Heart } from 'lucide-react'
@@ -22,6 +26,10 @@ interface CardItemProps {
 }
 
 export function CardItem({ card }: CardItemProps) {
+  const { data: session } = useSession()
+  const [isInWatchlist, setIsInWatchlist] = useState(false)
+  const [watchlistLoading, setWatchlistLoading] = useState(false)
+
   const formatCondition = (condition: string) => {
     return condition.split('_').map(word => 
       word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
@@ -34,6 +42,60 @@ export function CardItem({ card }: CardItemProps) {
 
   // Get seller display name
   const sellerName = card.seller.name || card.seller.username || 'Anonymous'
+
+  // Check if card is in user's watchlist
+  useEffect(() => {
+    const checkWatchlistStatus = async () => {
+      if (!session || !card) return
+
+      try {
+        const response = await fetch('/api/watchlist')
+        if (response.ok) {
+          const watchlist = await response.json()
+          const isWatched = watchlist.some((item: { cardId: string }) => item.cardId === card.id)
+          setIsInWatchlist(isWatched)
+        }
+      } catch (error) {
+        console.error('Error checking watchlist status:', error)
+      }
+    }
+
+    checkWatchlistStatus()
+  }, [session, card])
+
+  const handleWatchlistToggle = async (e: React.MouseEvent) => {
+    e.preventDefault() // Prevent navigation when clicking heart
+    e.stopPropagation()
+
+    if (!session) {
+      alert('Please sign in to use the watchlist feature')
+      return
+    }
+
+    setWatchlistLoading(true)
+    try {
+      const method = isInWatchlist ? 'DELETE' : 'POST'
+      const response = await fetch('/api/watchlist', {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ cardId: card.id }),
+      })
+
+      if (response.ok) {
+        setIsInWatchlist(!isInWatchlist)
+      } else {
+        const error = await response.json()
+        alert(error.error || `Failed to ${isInWatchlist ? 'remove from' : 'add to'} watchlist`)
+      }
+    } catch (error) {
+      console.error('Watchlist toggle error:', error)
+      alert(`Failed to ${isInWatchlist ? 'remove from' : 'add to'} watchlist`)
+    } finally {
+      setWatchlistLoading(false)
+    }
+  }
 
   return (
     <div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
@@ -54,8 +116,25 @@ export function CardItem({ card }: CardItemProps) {
               <span className="text-gray-500">No Image</span>
             </div>
           )}
-          <button className="absolute top-2 right-2 p-2 bg-white rounded-full shadow-md hover:bg-gray-50">
-            <Heart className="h-4 w-4 text-gray-600" />
+          <button 
+            onClick={handleWatchlistToggle}
+            disabled={watchlistLoading}
+            className={`absolute top-2 right-2 p-2 bg-white rounded-full shadow-md transition-colors ${
+              watchlistLoading 
+                ? 'opacity-50 cursor-not-allowed' 
+                : isInWatchlist 
+                  ? 'hover:bg-red-50' 
+                  : 'hover:bg-gray-50'
+            }`}
+            title={isInWatchlist ? 'Remove from Watchlist' : 'Add to Watchlist'}
+          >
+            <Heart 
+              className={`h-4 w-4 ${
+                isInWatchlist 
+                  ? 'text-red-500 fill-current' 
+                  : 'text-gray-600'
+              }`} 
+            />
           </button>
         </div>
       </Link>

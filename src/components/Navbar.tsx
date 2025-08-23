@@ -33,8 +33,13 @@ export function Navbar() {
               <div className="w-8 h-8 bg-gray-200 rounded-full animate-pulse"></div>
             ) : session ? (
               <>
-                <Link href="/watchlist" className="text-gray-600 hover:text-gray-900">
-                  <Heart className="h-6 w-6" />
+                <Link 
+                  href="/watchlist" 
+                  className="text-gray-600 hover:text-gray-900 flex items-center space-x-1"
+                  title="My Watchlist"
+                >
+                  <Heart className="h-5 w-5" />
+                  <span className="text-sm hidden sm:inline">Watchlist</span>
                 </Link>
                 <Link href="/sell" className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
                   Sell Cards
