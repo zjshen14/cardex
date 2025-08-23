@@ -42,7 +42,8 @@ CardEx is a Next.js 15 collectible card marketplace built with the App Router ar
 - **Frontend**: Next.js 15 with App Router, TypeScript, Tailwind CSS
 - **Database**: SQLite (development) / PostgreSQL (production) with Prisma ORM
 - **Authentication**: NextAuth.v4 with credentials provider and bcrypt password hashing
-- **File Storage**: Local filesystem storage in `public/uploads/cards/`
+- **File Storage**: Local filesystem (dev) / Supabase Storage (production)
+- **Hosting**: Vercel for frontend, Supabase for backend services
 - **Testing**: Jest with React Testing Library and jsdom environment
 
 ### Multi-Environment Database Architecture
@@ -100,15 +101,36 @@ RESTful API routes following Next.js App Router conventions:
 - **Database**: `src/lib/prisma.ts` - Prisma client configuration
 
 ### Environment Configuration
-Requires `.env.local` with:
-- `DATABASE_URL` (different formats for dev vs prod)
-- `NEXTAUTH_URL` 
-- `NEXTAUTH_SECRET`
+
+#### Development (.env)
+```bash
+DATABASE_URL="file:./dev.db"
+NEXTAUTH_URL="http://localhost:3000"  
+NEXTAUTH_SECRET="your-dev-secret"
+```
+
+#### Production (Vercel Environment Variables)
+```bash
+DATABASE_URL="postgresql://postgres.PROJECT_ID:PASSWORD@aws-1-us-east-2.pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=1"
+NEXTAUTH_URL="https://cardex-omega.vercel.app"
+NEXTAUTH_SECRET="your-production-secret" 
+NODE_ENV="production"
+NEXT_PUBLIC_SUPABASE_URL="https://PROJECT_ID.supabase.co"
+NEXT_PUBLIC_SUPABASE_ANON_KEY="your-supabase-anon-key"
+```
 
 ### File Storage Configuration
+
+#### Development
 - **Upload Directory**: `public/uploads/cards/` (auto-created)
 - **Ignored in Git**: Added to `.gitignore` to prevent committing uploads
 - **Permissions**: Ensure write access to `public/uploads/` directory
+
+#### Production (Supabase Storage)
+- **Bucket Name**: `card-images` (defined in `src/lib/supabase.ts`)
+- **Access**: Public bucket with RLS policies
+- **Image Optimization**: Configured in `next.config.ts` for Supabase domain
+- **Security Note**: RLS currently disabled (Issue #13) - needs proper policies before production launch
 
 ## Image Upload & Management System
 
@@ -120,10 +142,18 @@ Requires `.env.local` with:
 - **Progress Feedback**: Loading states and error handling
 
 ### Storage Architecture
+
+#### Development (Local Filesystem)
 - **Local Filesystem**: Images stored in `public/uploads/cards/`
 - **Unique Filenames**: Generated with timestamp and random ID
 - **Organized Structure**: Separate directory for card images
 - **URL Generation**: Public URLs like `/uploads/cards/filename.jpg`
+
+#### Production (Supabase Storage)
+- **Cloud Storage**: Images stored in Supabase `card-images` bucket
+- **Unique Filenames**: Generated with timestamp and random ID 
+- **CDN URLs**: Optimized URLs via Supabase CDN
+- **URL Format**: `https://PROJECT_ID.supabase.co/storage/v1/object/public/card-images/filename.webp`
 
 ### Image Management in Edit Dialog
 - **Existing Image Display**: Shows current images with delete options
@@ -133,9 +163,10 @@ Requires `.env.local` with:
 
 ### Automatic Image Cleanup
 - **Utility Function**: `src/lib/imageCleanup.ts` handles file deletion
+- **Hybrid Support**: Automatically detects environment and uses appropriate cleanup (local files vs Supabase)
 - **Delete Triggers**: Runs when listings are deleted or images removed
 - **Error Resilience**: Continues cleanup even if individual files fail
-- **Security**: Only processes local `/uploads/cards/` URLs
+- **Security**: Only processes authorized URLs (local `/uploads/cards/` or Supabase storage URLs)
 
 ### File Validation Rules
 - **Supported Types**: JPG, PNG, GIF, WebP
@@ -143,14 +174,50 @@ Requires `.env.local` with:
 - **Count Limits**: Maximum 5 images per listing
 - **Path Validation**: Only local upload paths processed
 
+## Production Deployment
+
+### Live Application
+- **URL**: https://cardex-omega.vercel.app
+- **Status**: Fully operational marketplace
+- **Database**: PostgreSQL via Supabase (schema created manually)
+- **Storage**: Supabase Storage with `card-images` bucket
+- **Authentication**: NextAuth configured for production domain
+
+### Deployment Architecture
+- **Frontend**: Vercel (automated deployments from GitHub main branch)
+- **Database**: Supabase PostgreSQL (managed service)
+- **Storage**: Supabase Storage (managed service)
+- **CI/CD**: GitHub Actions → Vercel integration
+- **Domain**: cardex-omega.vercel.app (Vercel subdomain)
+
+### Key Production Differences
+- **Database Schema**: Uses native PostgreSQL arrays (`String[]`) for `imageUrls` field
+- **Image URLs**: Supabase CDN URLs instead of local `/uploads/` paths
+- **Dependencies**: TypeScript and Tailwind moved to production dependencies for Vercel builds
+- **Next.js Config**: Supabase domain added to `remotePatterns` for image optimization
+- **Environment Variables**: All configured in Vercel dashboard
+- **Authentication**: Session management works across Vercel edge functions
+
+### Known Issues
+- **Issue #13**: RLS policies disabled on `storage.objects` table (security risk - needs fixing)
+- **Connection String**: Uses pgbouncer with connection_limit=1 to avoid prepared statement conflicts
+
+### Testing & Quality Assurance
+- **CI Status**: All 220+ tests passing
+- **ESLint**: 0 warnings in production
+- **Type Safety**: Full TypeScript coverage with hybrid type handling
+- **Performance**: Image optimization enabled, CDN delivery
+- **Security**: Authentication required for all protected routes and uploads
+
 ## Testing Setup
 Jest configuration with:
 - Next.js integration via `next/jest`
 - jsdom environment for React component testing
 - Setup file at `jest.setup.js`
-- **Comprehensive Coverage**: 164+ tests covering:
+- **Comprehensive Coverage**: 220+ tests covering:
   - API endpoints with mocked Prisma operations
   - React components with user interactions
   - Image upload and validation logic
   - File cleanup and error handling
   - Authentication flows and edge cases
+  - Hybrid environment compatibility
