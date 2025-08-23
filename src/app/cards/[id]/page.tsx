@@ -14,7 +14,7 @@ interface Card {
   description: string | null
   condition: string
   price: number
-  imageUrls: string
+  imageUrls: string | string[]
   category: string
   set: string | null
   rarity: string | null
@@ -85,6 +85,12 @@ export default function CardDetailsPage() {
 
   const getImageUrls = (): string[] => {
     if (!card?.imageUrls) return []
+    
+    // Handle both development (JSON string) and production (array) formats
+    if (Array.isArray(card.imageUrls)) {
+      return card.imageUrls
+    }
+    
     try {
       return JSON.parse(card.imageUrls)
     } catch {
