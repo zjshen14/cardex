@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
+import type { Session } from 'next-auth'
 import fs from 'fs/promises'
 import path from 'path'
 
@@ -10,7 +11,7 @@ const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'ima
 export async function POST(request: NextRequest) {
   try {
     // Check authentication
-    const session = await getServerSession(authOptions) as any
+    const session = await getServerSession(authOptions) as Session | null
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }

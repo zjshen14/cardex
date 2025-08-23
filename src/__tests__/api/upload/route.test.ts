@@ -1,4 +1,14 @@
+// Mock NextAuth before any imports
+jest.mock('next-auth/next', () => ({
+  getServerSession: jest.fn(),
+}))
+
+jest.mock('@/lib/auth', () => ({
+  authOptions: {},
+}))
+
 import { POST } from '@/app/api/upload/route'
+import { getServerSession } from 'next-auth/next'
 import { NextRequest } from 'next/server'
 import { existsSync, unlinkSync, readdirSync } from 'fs'
 import { join } from 'path'
@@ -18,9 +28,14 @@ describe('/api/upload', () => {
   const mockWriteFile = fsPromises.writeFile as jest.MockedFunction<typeof fsPromises.writeFile>
   const mockMkdir = fsPromises.mkdir as jest.MockedFunction<typeof fsPromises.mkdir>
   const mockExistsSync = existsSync as jest.MockedFunction<typeof existsSync>
+  const mockGetServerSession = getServerSession as jest.MockedFunction<typeof getServerSession>
 
   beforeEach(() => {
     jest.clearAllMocks()
+    // Mock authenticated session by default
+    mockGetServerSession.mockResolvedValue({
+      user: { id: 'user1', email: 'test@example.com' }
+    })
   })
 
   afterEach(() => {
@@ -63,6 +78,21 @@ describe('/api/upload', () => {
   }
 
   describe('POST /api/upload', () => {
+    it('should return 401 when not authenticated', async () => {
+      mockGetServerSession.mockResolvedValue(null)
+      
+      const formData = new FormData()
+      const file = new File(['test content'], 'test.jpg', { type: 'image/jpeg' })
+      formData.append('files', file)
+
+      const request = createMockRequest(formData)
+      const response = await POST(request)
+      const data = await response.json()
+
+      expect(response.status).toBe(401)
+      expect(data.error).toBe('Unauthorized')
+    })
+
     it('should upload valid image files successfully', async () => {
       mockExistsSync.mockReturnValue(true)
       mockWriteFile.mockResolvedValue(undefined)
