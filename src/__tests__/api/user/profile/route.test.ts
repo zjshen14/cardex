@@ -8,7 +8,7 @@
  */
 
 // Mock NextAuth at the very top before any imports
-jest.mock('next-auth', () => ({
+jest.mock('next-auth/next', () => ({
   getServerSession: jest.fn()
 }))
 

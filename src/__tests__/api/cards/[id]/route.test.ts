@@ -14,7 +14,7 @@ const createMockRequest = (data?: Record<string, unknown>) => ({
 }) as unknown as NextRequest
 
 // Mock dependencies
-jest.mock('next-auth', () => ({
+jest.mock('next-auth/next', () => ({
   getServerSession: jest.fn(),
 }))
 
