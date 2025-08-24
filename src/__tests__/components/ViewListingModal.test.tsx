@@ -111,7 +111,7 @@ describe('ViewListingModal', () => {
 
     // Header information
     expect(screen.getByText('Charizard Base Set')).toBeInTheDocument()
-    const priceElements = screen.getAllByText('$150.99')
+    const priceElements = screen.getAllByText('150.99')
     expect(priceElements.length).toBeGreaterThan(0)
     expect(screen.getByText('Mint')).toBeInTheDocument()
     expect(screen.getByText('Active')).toBeInTheDocument()
@@ -156,7 +156,7 @@ describe('ViewListingModal', () => {
 
     // Basic information should be present
     expect(screen.getByText('Simple Card')).toBeInTheDocument()
-    expect(screen.getByText('$25.00')).toBeInTheDocument()
+    expect(screen.getByText('25.00')).toBeInTheDocument()
     expect(screen.getByText('Good')).toBeInTheDocument()
     expect(screen.getByText('Sold')).toBeInTheDocument()
     expect(screen.getByText('Gaming Cards')).toBeInTheDocument()

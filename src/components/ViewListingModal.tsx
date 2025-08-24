@@ -114,7 +114,7 @@ export function ViewListingModal({ isOpen, card, onClose }: ViewListingModalProp
             <div className="mt-2 flex items-center space-x-4">
               <div className="flex items-center">
                 <DollarSign className="h-5 w-5 text-green-600 mr-1" />
-                <span className="text-2xl font-bold text-green-600">${card.price.toFixed(2)}</span>
+                <span className="text-2xl font-bold text-green-600">{card.price.toFixed(2)}</span>
               </div>
               <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getConditionColor(card.condition)}`}>
                 {formatCondition(card.condition)}
