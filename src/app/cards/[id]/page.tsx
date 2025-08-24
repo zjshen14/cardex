@@ -7,6 +7,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowLeft, Heart, Share2, User } from 'lucide-react'
 import { ContactSellerModal } from '@/components/ContactSellerModal'
+import { ShareModal } from '@/components/ShareModal'
 
 interface Card {
   id: string
@@ -46,6 +47,7 @@ export default function CardDetailsPage() {
   const [error, setError] = useState<string | null>(null)
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
   const [showContactModal, setShowContactModal] = useState(false)
+  const [showShareModal, setShowShareModal] = useState(false)
   const [isInWatchlist, setIsInWatchlist] = useState(false)
   const [watchlistLoading, setWatchlistLoading] = useState(false)
 
@@ -218,6 +220,21 @@ export default function CardDetailsPage() {
         />
       )}
 
+      {/* Share Modal */}
+      {card && (
+        <ShareModal
+          isOpen={showShareModal}
+          onClose={() => setShowShareModal(false)}
+          card={{
+            title: card.title,
+            category: card.category,
+            price: card.price,
+            condition: card.condition
+          }}
+          cardUrl={typeof window !== 'undefined' ? window.location.href : ''}
+        />
+      )}
+
       <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Back Navigation */}
@@ -379,7 +396,10 @@ export default function CardDetailsPage() {
                           : 'Add to Watchlist'
                       }
                     </button>
-                    <button className="flex-1 bg-white border border-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center">
+                    <button 
+                      onClick={() => setShowShareModal(true)}
+                      className="flex-1 bg-white border border-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center"
+                    >
                       <Share2 className="h-4 w-4 mr-2" />
                       Share
                     </button>
