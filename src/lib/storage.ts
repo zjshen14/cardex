@@ -1,6 +1,7 @@
 // Hybrid storage abstraction layer - local filesystem for dev, Supabase for production
 import fs from 'fs/promises'
 import path from 'path'
+import { isProduction } from './environment'
 
 // Types for storage operations
 export interface StorageResult {
@@ -8,13 +9,10 @@ export interface StorageResult {
   error?: string
 }
 
-// Check if we're in production environment
-const isProduction = process.env.NODE_ENV === 'production' && process.env.NEXT_PUBLIC_SUPABASE_URL
-
 // Storage abstraction layer
 export class Storage {
   private static async useLocalStorage(): Promise<boolean> {
-    return !isProduction
+    return !isProduction()
   }
 
   static async uploadImages(files: File[]): Promise<string[]> {

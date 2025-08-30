@@ -1,6 +1,7 @@
 import fs from 'fs/promises'
 import path from 'path'
 import { parseImageUrls } from './imageUtils'
+import { isProduction } from './environment'
 
 /**
  * Cleans up image files using hybrid storage (local filesystem or Supabase)
@@ -17,9 +18,7 @@ export async function cleanupImages(imageUrls: string | string[]): Promise<void>
     }
 
     // Check if we should use Supabase storage (production)
-    const isProduction = process.env.NODE_ENV === 'production' && process.env.NEXT_PUBLIC_SUPABASE_URL
-    
-    if (isProduction) {
+    if (isProduction()) {
       // Use Supabase storage deletion for production
       const { deleteMultipleImages } = await import('./supabaseStorage')
       await deleteMultipleImages(urlArray)

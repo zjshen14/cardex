@@ -4,6 +4,8 @@ import { authOptions } from '@/lib/auth'
 import type { Session } from 'next-auth'
 import fs from 'fs/promises'
 import path from 'path'
+import { rateLimiter } from '@/lib/rate-limit'
+import { isProduction } from '@/lib/environment'
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']
@@ -14,6 +16,30 @@ export async function POST(request: NextRequest) {
     const session = await getServerSession(authOptions) as Session | null
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Rate limiting for upload endpoints (10 uploads per minute per user)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const userId = (session.user as any)?.id
+    const rateLimit = rateLimiter.check(request, {
+      windowMs: 60 * 1000, // 1 minute
+      maxAttempts: 10, // 10 uploads per minute
+      blockDurationMs: 5 * 60 * 1000, // 5 minute block
+      identifier: userId // Use user ID for authenticated rate limiting
+    })
+    
+    if (!rateLimit.allowed) {
+      const resetTime = new Date(rateLimit.resetTime).toISOString()
+      return NextResponse.json(
+        { 
+          error: rateLimit.blocked 
+            ? `Upload rate limit exceeded. Try again after ${resetTime}` 
+            : 'Too many upload requests. Please slow down.',
+          remainingAttempts: rateLimit.remainingAttempts,
+          resetTime
+        },
+        { status: 429 }
+      )
     }
 
     const formData = await request.formData()
@@ -39,12 +65,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if we should use Supabase storage (production)
-    const isProduction = process.env.NODE_ENV === 'production' && process.env.NEXT_PUBLIC_SUPABASE_URL
-    
-    if (isProduction) {
+    if (isProduction()) {
       // Use Supabase storage for production
       const { uploadMultipleImages } = await import('@/lib/supabaseStorage')
       const urls = await uploadMultipleImages(files)
+      // Reset rate limit on successful upload
+      rateLimiter.reset(request, userId)
+      
       return NextResponse.json({ 
         message: 'Files uploaded successfully',
         urls 
@@ -81,6 +108,9 @@ export async function POST(request: NextRequest) {
         urls.push(`/uploads/cards/${fileName}`)
       }
 
+      // Reset rate limit on successful upload
+      rateLimiter.reset(request, userId)
+      
       return NextResponse.json({ 
         message: 'Files uploaded successfully',
         urls 
