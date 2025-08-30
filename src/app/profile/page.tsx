@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { User, Mail, Calendar, Edit2, Save, X, Phone, MessageCircle, Send, Eye, EyeOff } from 'lucide-react'
+import { User, Mail, Calendar, Edit2, Save, X, Phone, MessageCircle, Send, Eye, EyeOff, Lock } from 'lucide-react'
 import { LoadingModal } from '@/components/LoadingModal'
+import { ChangePasswordModal } from '@/components/ChangePasswordModal'
 
 interface UserProfile {
   id: string
@@ -38,6 +39,7 @@ export default function ProfilePage() {
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState('')
   const [modalStatus, setModalStatus] = useState<'loading' | 'success' | 'error' | null>(null)
+  const [showChangePasswordModal, setShowChangePasswordModal] = useState(false)
   
   const [editForm, setEditForm] = useState({
     name: '',
@@ -226,6 +228,14 @@ export default function ProfilePage() {
         onClose={handleModalClose}
       />
 
+      <ChangePasswordModal
+        isOpen={showChangePasswordModal}
+        onClose={() => setShowChangePasswordModal(false)}
+        onSuccess={() => {
+          // Optionally show a success message or refresh data
+        }}
+      />
+
       <div className="min-h-screen bg-gray-50 py-8">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="bg-white rounded-lg shadow-md overflow-hidden">
@@ -247,13 +257,22 @@ export default function ProfilePage() {
                 </div>
                 
                 {!isEditing && (
-                  <button
-                    onClick={handleEdit}
-                    className="bg-white text-blue-600 px-4 py-2 rounded-md hover:bg-gray-100 transition-colors flex items-center"
-                  >
-                    <Edit2 className="h-4 w-4 mr-2" />
-                    Edit Profile
-                  </button>
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={handleEdit}
+                      className="bg-white text-blue-600 px-4 py-2 rounded-md hover:bg-gray-100 transition-colors flex items-center"
+                    >
+                      <Edit2 className="h-4 w-4 mr-2" />
+                      Edit Profile
+                    </button>
+                    <button
+                      onClick={() => setShowChangePasswordModal(true)}
+                      className="bg-white text-blue-600 px-4 py-2 rounded-md hover:bg-gray-100 transition-colors flex items-center"
+                    >
+                      <Lock className="h-4 w-4 mr-2" />
+                      Change Password
+                    </button>
+                  </div>
                 )}
               </div>
             </div>

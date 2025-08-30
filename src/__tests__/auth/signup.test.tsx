@@ -46,8 +46,13 @@ describe('SignUp Page', () => {
     render(<SignUpPage />)
 
     await user.type(screen.getByPlaceholderText('Email address'), 'test@example.com')
-    await user.type(screen.getByPlaceholderText('Password'), 'password123')
-    await user.type(screen.getByPlaceholderText('Confirm password'), 'differentPassword')
+    await user.type(screen.getByPlaceholderText('Password'), 'MySecure2024#Pass')
+    await user.type(screen.getByPlaceholderText('Confirm password'), 'DifferentSecure2025#Pass')
+    
+    // Wait for password strength validation to complete
+    await waitFor(() => {
+      expect(screen.getByText('Strong')).toBeInTheDocument()
+    })
     
     await user.click(screen.getByRole('button', { name: /sign up/i }))
 
@@ -77,8 +82,13 @@ describe('SignUp Page', () => {
     render(<SignUpPage />)
 
     await user.type(screen.getByPlaceholderText('Email address'), 'test@example.com')
-    await user.type(screen.getByPlaceholderText('Password'), 'password123')
-    await user.type(screen.getByPlaceholderText('Confirm password'), 'password123')
+    await user.type(screen.getByPlaceholderText('Password'), 'MySecure2024#Pass')
+    await user.type(screen.getByPlaceholderText('Confirm password'), 'MySecure2024#Pass')
+    
+    // Wait for password strength validation to complete
+    await waitFor(() => {
+      expect(screen.getByText('Strong')).toBeInTheDocument()
+    })
     
     await user.click(screen.getByRole('button', { name: /sign up/i }))
 
@@ -90,7 +100,7 @@ describe('SignUp Page', () => {
         },
         body: JSON.stringify({
           email: 'test@example.com',
-          password: 'password123',
+          password: 'MySecure2024#Pass',
         }),
       })
     })
@@ -98,7 +108,7 @@ describe('SignUp Page', () => {
     await waitFor(() => {
       expect(mockSignIn).toHaveBeenCalledWith('credentials', {
         email: 'test@example.com',
-        password: 'password123',
+        password: 'MySecure2024#Pass',
         callbackUrl: '/',
         redirect: false,
       })
@@ -119,8 +129,13 @@ describe('SignUp Page', () => {
     render(<SignUpPage />)
 
     await user.type(screen.getByPlaceholderText('Email address'), 'test@example.com')
-    await user.type(screen.getByPlaceholderText('Password'), 'password123')
-    await user.type(screen.getByPlaceholderText('Confirm password'), 'password123')
+    await user.type(screen.getByPlaceholderText('Password'), 'MySecure2024#Pass')
+    await user.type(screen.getByPlaceholderText('Confirm password'), 'MySecure2024#Pass')
+    
+    // Wait for password strength validation to complete
+    await waitFor(() => {
+      expect(screen.getByText('Strong')).toBeInTheDocument()
+    })
     
     await user.click(screen.getByRole('button', { name: /sign up/i }))
 
@@ -143,13 +158,20 @@ describe('SignUp Page', () => {
     render(<SignUpPage />)
 
     await user.type(screen.getByPlaceholderText('Email address'), 'test@example.com')
-    await user.type(screen.getByPlaceholderText('Password'), 'password123')
-    await user.type(screen.getByPlaceholderText('Confirm password'), 'password123')
+    await user.type(screen.getByPlaceholderText('Password'), 'MySecure2024#Pass')
+    await user.type(screen.getByPlaceholderText('Confirm password'), 'MySecure2024#Pass')
+    
+    // Wait for password strength validation to complete
+    await waitFor(() => {
+      expect(screen.getByText('Strong')).toBeInTheDocument()
+    })
     
     await user.click(screen.getByRole('button', { name: /sign up/i }))
 
     // Should show loading state
-    expect(screen.getByText('Creating account...')).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.getByText('Creating account...')).toBeInTheDocument()
+    })
     expect(screen.getByRole('button', { name: /creating account/i })).toBeDisabled()
   })
 })

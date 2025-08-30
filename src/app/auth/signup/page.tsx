@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import { signIn } from 'next-auth/react'
 import Link from 'next/link'
+import { PasswordStrengthIndicator } from '@/components/PasswordStrengthIndicator'
+import { PasswordValidationResult } from '@/lib/password-utils'
 
 export default function SignUpPage() {
   const [email, setEmail] = useState('')
@@ -10,6 +12,11 @@ export default function SignUpPage() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+  const [passwordValidation, setPasswordValidation] = useState<PasswordValidationResult>({
+    isValid: false,
+    errors: [],
+    score: 0
+  })
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -18,6 +25,12 @@ export default function SignUpPage() {
 
     if (password !== confirmPassword) {
       setError('Passwords do not match')
+      setIsLoading(false)
+      return
+    }
+
+    if (!passwordValidation.isValid) {
+      setError('Please ensure your password meets all security requirements')
       setIsLoading(false)
       return
     }
@@ -38,7 +51,11 @@ export default function SignUpPage() {
       const data = await response.json()
 
       if (!response.ok) {
-        setError(data.error || 'Failed to create account')
+        if (data.passwordErrors && data.passwordErrors.length > 0) {
+          setError(`Password requirements: ${data.passwordErrors.join(', ')}`)
+        } else {
+          setError(data.error || 'Failed to create account')
+        }
         setIsLoading(false)
         return
       }
@@ -116,6 +133,11 @@ export default function SignUpPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
+              <PasswordStrengthIndicator 
+                password={password}
+                onValidationChange={setPasswordValidation}
+                showRequirements={true}
+              />
             </div>
             <div>
               <label htmlFor="confirm-password" className="sr-only">
@@ -138,7 +160,7 @@ export default function SignUpPage() {
           <div>
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={isLoading || !passwordValidation.isValid}
               className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? 'Creating account...' : 'Sign up'}
