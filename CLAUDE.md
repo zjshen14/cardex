@@ -221,3 +221,15 @@ Jest configuration with:
   - File cleanup and error handling
   - Authentication flows and edge cases
   - Hybrid environment compatibility
+
+## Documentation and Issue Management
+
+When working on complex issues or implementing significant features:
+
+- **AVOID creating temporary documentation files** (*.md, *.sql scripts, guides) in the codebase
+- **ADD comprehensive solution details directly to GitHub issues** as comments instead  
+- This includes: deployment guides, SQL scripts, troubleshooting steps, technical implementation details
+- Keep the codebase clean by documenting solutions in the issue tracker where they belong
+- Only create documentation files in the codebase if they are permanent additions requested by the user
+
+This approach maintains a clean repository while ensuring all solution details are properly documented and accessible.
