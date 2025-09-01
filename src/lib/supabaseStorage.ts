@@ -1,4 +1,4 @@
-import { supabase, STORAGE_BUCKET } from './supabase'
+import { supabaseAdmin, STORAGE_BUCKET } from './supabase-admin'
 
 export async function uploadImage(file: File): Promise<string> {
   // Generate unique filename with timestamp and random string
@@ -7,7 +7,7 @@ export async function uploadImage(file: File): Promise<string> {
   const fileExtension = file.name.split('.').pop()
   const fileName = `${timestamp}-${randomString}.${fileExtension}`
 
-  const { data, error } = await supabase.storage
+  const { data, error } = await supabaseAdmin.storage
     .from(STORAGE_BUCKET)
     .upload(fileName, file, {
       cacheControl: '3600',
@@ -19,7 +19,7 @@ export async function uploadImage(file: File): Promise<string> {
   }
 
   // Get the public URL for the uploaded file
-  const { data: urlData } = supabase.storage
+  const { data: urlData } = supabaseAdmin.storage
     .from(STORAGE_BUCKET)
     .getPublicUrl(data.path)
 
@@ -41,7 +41,7 @@ export async function deleteImage(url: string): Promise<void> {
 
   const filePath = urlParts[1]
   
-  const { error } = await supabase.storage
+  const { error } = await supabaseAdmin.storage
     .from(STORAGE_BUCKET)
     .remove([filePath])
 
