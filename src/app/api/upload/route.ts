@@ -6,9 +6,38 @@ import fs from 'fs/promises'
 import path from 'path'
 import { rateLimiter } from '@/lib/rate-limit'
 import { isProduction } from '@/lib/environment'
+import { fileTypeFromBuffer } from 'file-type'
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']
+
+async function validateFileContent(file: File): Promise<void> {
+  // Get file buffer for content analysis
+  const arrayBuffer = await file.arrayBuffer()
+  const buffer = Buffer.from(arrayBuffer)
+  
+  // Detect actual file type from content
+  const detectedType = await fileTypeFromBuffer(buffer)
+  
+  if (!detectedType) {
+    throw new Error(`Unable to detect file type for: ${file.name}`)
+  }
+  
+  // Check if detected MIME type is allowed
+  if (!ALLOWED_TYPES.includes(detectedType.mime)) {
+    throw new Error(`File content does not match allowed types. Detected: ${detectedType.mime}`)
+  }
+  
+  // Additional validation: ensure reported type matches content
+  // Note: Some browsers report 'image/jpg' while actual MIME is 'image/jpeg'
+  const normalizedReportedType = file.type === 'image/jpg' ? 'image/jpeg' : file.type
+  const normalizedDetectedType = detectedType.mime
+  
+  if (normalizedReportedType !== normalizedDetectedType) {
+    console.warn(`MIME type mismatch for ${file.name}: reported ${file.type}, detected ${detectedType.mime}`)
+    // Allow the upload if detected type is valid, but log the mismatch for monitoring
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -53,7 +82,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Maximum 5 files allowed' }, { status: 400 })
     }
 
-    // Validate all files first
+    // Validate all files first (basic checks)
     for (const file of files) {
       if (!ALLOWED_TYPES.includes(file.type)) {
         throw new Error(`Invalid file type: ${file.type}`)
@@ -62,6 +91,11 @@ export async function POST(request: NextRequest) {
       if (file.size > MAX_FILE_SIZE) {
         throw new Error(`File too large: ${file.name}`)
       }
+    }
+
+    // Perform content-based validation
+    for (const file of files) {
+      await validateFileContent(file)
     }
 
     // Check if we should use Supabase storage (production)
