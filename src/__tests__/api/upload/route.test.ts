@@ -13,6 +13,7 @@ import { NextRequest } from 'next/server'
 import { existsSync, unlinkSync, readdirSync } from 'fs'
 import { join } from 'path'
 import * as fsPromises from 'fs/promises'
+import { fileTypeFromBuffer } from 'file-type'
 
 // Mock file system functions for testing
 jest.mock('fs/promises', () => ({
@@ -24,17 +25,15 @@ jest.mock('fs', () => ({
   existsSync: jest.fn(),
 }))
 
-// Mock file-type for testing
-const mockFileTypeFromBuffer = jest.fn()
-jest.doMock('file-type', () => ({
-  fileTypeFromBuffer: mockFileTypeFromBuffer,
-}))
+// Mock file-type for testing using manual mock
+jest.mock('file-type')
 
 describe('/api/upload', () => {
   const mockWriteFile = fsPromises.writeFile as jest.MockedFunction<typeof fsPromises.writeFile>
   const mockMkdir = fsPromises.mkdir as jest.MockedFunction<typeof fsPromises.mkdir>
   const mockExistsSync = existsSync as jest.MockedFunction<typeof existsSync>
   const mockGetServerSession = getServerSession as jest.MockedFunction<typeof getServerSession>
+  const mockFileTypeFromBuffer = fileTypeFromBuffer as jest.MockedFunction<typeof fileTypeFromBuffer>
 
   beforeEach(() => {
     jest.clearAllMocks()
@@ -236,7 +235,7 @@ describe('/api/upload', () => {
       expect(data.error).toBe('Disk full')
     })
 
-    describe.skip('Content-based file validation', () => {
+    describe('Content-based file validation', () => {
       it('should reject files with spoofed extensions (malicious file)', async () => {
         mockExistsSync.mockReturnValue(true)
         // Mock file-type detection finding a different type than claimed
